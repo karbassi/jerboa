@@ -64,6 +64,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.karbassi.Jerboa.QuickLook
         INFOPLIST_FILE: QuickLook/Info.plist
+        CODE_SIGN_ENTITLEMENTS: QuickLook/JerboaQuickLook.entitlements
         SWIFT_VERSION: "6.0"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
     info:

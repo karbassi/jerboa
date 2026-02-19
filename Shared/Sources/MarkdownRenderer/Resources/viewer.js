@@ -247,3 +247,22 @@ window.scrollToHeading = function(id) {
   var el = document.getElementById(id);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
+
+// ── Font size controls (called from native app) ──
+var baseFontSize = 13;
+var currentFontSize = baseFontSize;
+
+window.increaseFontSize = function() {
+  currentFontSize = Math.min(currentFontSize + 1, 32);
+  document.body.style.fontSize = currentFontSize + 'px';
+};
+
+window.decreaseFontSize = function() {
+  currentFontSize = Math.max(currentFontSize - 1, 8);
+  document.body.style.fontSize = currentFontSize + 'px';
+};
+
+window.resetFontSize = function() {
+  currentFontSize = baseFontSize;
+  document.body.style.fontSize = currentFontSize + 'px';
+};

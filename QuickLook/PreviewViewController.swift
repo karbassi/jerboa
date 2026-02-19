@@ -29,7 +29,9 @@ class PreviewViewController: NSViewController, QLPreviewingController {
             webView.navigationDelegate = self
         }
 
-        let js = "window.renderMarkdown(`\(escaped)`); window.setTheme('modern');"
+        let defaults = UserDefaults(suiteName: "group.com.karbassi.Jerboa")
+        let theme = defaults?.string(forKey: "jerboa-theme") ?? "classic"
+        let js = "window.renderMarkdown(`\(escaped)`); window.setTheme('\(theme)');"
 
         await MainActor.run {
             webView.loadFileURL(htmlURL, allowingReadAccessTo: resourceDir)

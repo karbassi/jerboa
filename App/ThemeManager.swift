@@ -3,17 +3,19 @@ import MarkdownRenderer
 
 @Observable
 final class ThemeManager {
+    static let suiteName = "group.com.karbassi.Jerboa"
+    static let themeKey = "jerboa-theme"
+
     var currentTheme: Theme {
         didSet {
-            storedTheme = currentTheme.rawValue
+            let defaults = UserDefaults(suiteName: Self.suiteName) ?? .standard
+            defaults.set(currentTheme.rawValue, forKey: Self.themeKey)
         }
     }
 
-    @ObservationIgnored
-    @AppStorage("jerboa-theme") private var storedTheme: String = Theme.classic.rawValue
-
     init() {
-        let stored = UserDefaults.standard.string(forKey: "jerboa-theme") ?? Theme.classic.rawValue
+        let defaults = UserDefaults(suiteName: Self.suiteName) ?? .standard
+        let stored = defaults.string(forKey: Self.themeKey) ?? Theme.classic.rawValue
         self.currentTheme = Theme(rawValue: stored) ?? .classic
     }
 }

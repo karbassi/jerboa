@@ -10,6 +10,7 @@ struct TOCEntry: Identifiable, Codable, Equatable {
 final class WebViewCoordinator: NSObject, ObservableObject {
     @Published var tocEntries: [TOCEntry] = []
     @Published var activeHeadingID: String?
+    @Published var fontSize: CGFloat = 13
 
     private var webView: WKWebView?
     private var isPageLoaded = false
@@ -46,6 +47,21 @@ final class WebViewCoordinator: NSObject, ObservableObject {
 
     func scrollToHeading(_ id: String) {
         webView?.evaluateJavaScript("window.scrollToHeading('\(id)');")
+    }
+
+    func increaseFontSize() {
+        fontSize = min(fontSize + 1, 32)
+        webView?.evaluateJavaScript("window.increaseFontSize();")
+    }
+
+    func decreaseFontSize() {
+        fontSize = max(fontSize - 1, 8)
+        webView?.evaluateJavaScript("window.decreaseFontSize();")
+    }
+
+    func resetFontSize() {
+        fontSize = 13
+        webView?.evaluateJavaScript("window.resetFontSize();")
     }
 
     func setTheme(_ name: String) {

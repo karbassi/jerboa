@@ -6,12 +6,14 @@ struct ContentView: View {
     @StateObject private var coordinator = WebViewCoordinator()
     @Environment(ThemeManager.self) private var themeManager
     @State private var fileWatcher: FileWatcher?
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             TOCSidebarView(
                 entries: coordinator.tocEntries,
                 activeHeadingID: coordinator.activeHeadingID,
+                fontSize: coordinator.fontSize,
                 onSelect: { id in
                     coordinator.scrollToHeading(id)
                 }
@@ -27,8 +29,12 @@ struct ContentView: View {
             .accessibilityIdentifier("markdown-webview")
         }
         .frame(minWidth: 700, minHeight: 500)
+        .focusedSceneValue(\.coordinator, coordinator)
         .onAppear {
             setupFileWatcher()
+            if let fileURL {
+                SpotlightIndexer.index(fileURL: fileURL, text: document.text)
+            }
         }
         .onDisappear {
             fileWatcher?.stop()

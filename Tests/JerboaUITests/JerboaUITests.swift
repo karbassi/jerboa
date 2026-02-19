@@ -148,10 +148,10 @@ final class JerboaUITests: JerboaUITestCase {
 
     func testThemeMenuExists() {
         let menuBar = app.menuBars.firstMatch
-        let themeMenu = menuBar.menuBarItems["Theme"]
-        XCTAssertTrue(themeMenu.exists, "Theme menu should exist in menu bar")
+        let viewMenu = menuBar.menuBarItems["View"]
+        XCTAssertTrue(viewMenu.exists, "View menu should exist in menu bar")
 
-        themeMenu.click()
+        viewMenu.click()
         XCTAssertTrue(app.menuItems["Classic"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.menuItems["Modern"].exists)
         app.typeKey(.escape, modifierFlags: [])
@@ -159,16 +159,16 @@ final class JerboaUITests: JerboaUITestCase {
 
     func testThemeSwitchToModern() {
         let menuBar = app.menuBars.firstMatch
-        let themeMenu = menuBar.menuBarItems["Theme"]
+        let viewMenu = menuBar.menuBarItems["View"]
 
-        themeMenu.click()
+        viewMenu.click()
         app.menuItems["Modern"].click()
         Thread.sleep(forTimeInterval: 1)
 
         takeScreenshot(named: "theme-modern")
 
         // Switch back to Classic
-        themeMenu.click()
+        viewMenu.click()
         app.menuItems["Classic"].click()
         Thread.sleep(forTimeInterval: 1)
 
