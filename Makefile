@@ -4,7 +4,7 @@ APP_NAME = Jerboa.app
 CONFIGURATION = Release
 DERIVED_DATA = $(HOME)/Library/Developer/Xcode/DerivedData
 
-.PHONY: all generate build run test uitest test-package clean lint
+.PHONY: all generate build run test uitest test-package clean lint deploy
 
 all: generate build
 
@@ -72,6 +72,16 @@ dmg: sign
 		--app-drop-link 450 190 \
 		Jerboa.dmg \
 		"$$app"
+
+# Deploy to personal machine via Tailscale
+DEPLOY_HOST = personal
+DEPLOY_PATH = ~/Desktop
+SSH_OPTS = -o IdentitiesOnly=yes -o PreferredAuthentications=publickey,keyboard-interactive,password
+
+deploy: sign
+	@app=$$(find $(DERIVED_DATA)/Jerboa-*/Build/Products/$(CONFIGURATION) -name "$(APP_NAME)" -maxdepth 1 2>/dev/null | head -1); \
+	rsync -az -e "ssh $(SSH_OPTS)" "$$app" $(DEPLOY_HOST):$(DEPLOY_PATH)/ && \
+	ssh $(SSH_OPTS) $(DEPLOY_HOST) '/usr/bin/xattr -cr $(DEPLOY_PATH)/$(APP_NAME)'
 
 # Clean build artifacts
 clean:

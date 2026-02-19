@@ -144,49 +144,6 @@ final class JerboaUITests: JerboaUITestCase {
                        "Middle heading should no longer be active")
     }
 
-    // MARK: - Theme Menu
-
-    func testThemeMenuExists() {
-        let menuBar = app.menuBars.firstMatch
-        let viewMenu = menuBar.menuBarItems["View"]
-        XCTAssertTrue(viewMenu.exists, "View menu should exist in menu bar")
-
-        viewMenu.click()
-        XCTAssertTrue(app.menuItems["Classic"].waitForExistence(timeout: 2))
-        XCTAssertTrue(app.menuItems["Modern"].exists)
-        app.typeKey(.escape, modifierFlags: [])
-    }
-
-    func testThemeSwitchToModern() {
-        let menuBar = app.menuBars.firstMatch
-        let viewMenu = menuBar.menuBarItems["View"]
-
-        viewMenu.click()
-        app.menuItems["Modern"].click()
-        Thread.sleep(forTimeInterval: 1)
-
-        takeScreenshot(named: "theme-modern")
-
-        // Switch back to Classic
-        viewMenu.click()
-        app.menuItems["Classic"].click()
-        Thread.sleep(forTimeInterval: 1)
-
-        takeScreenshot(named: "theme-classic")
-    }
-
-    func testThemeKeyboardShortcuts() {
-        // Cmd+Shift+2 for Modern
-        app.typeKey("2", modifierFlags: [.command, .shift])
-        Thread.sleep(forTimeInterval: 1)
-        takeScreenshot(named: "theme-modern-shortcut")
-
-        // Cmd+Shift+1 for Classic
-        app.typeKey("1", modifierFlags: [.command, .shift])
-        Thread.sleep(forTimeInterval: 1)
-        takeScreenshot(named: "theme-classic-shortcut")
-    }
-
     // MARK: - Helpers
 
     private func takeScreenshot(named name: String) {

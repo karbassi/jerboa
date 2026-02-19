@@ -15,7 +15,6 @@ final class WebViewCoordinator: NSObject, ObservableObject {
     private var webView: WKWebView?
     private var isPageLoaded = false
     private var lastRenderedText: String?
-    private var lastRenderedTheme: String?
 
     func setup(webView: WKWebView) {
         self.webView = webView
@@ -27,22 +26,15 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         webView.navigationDelegate = self
     }
 
-    func renderContent(_ text: String, theme: String) {
-        let textChanged = text != lastRenderedText
-        let themeChanged = theme != lastRenderedTheme
-
+    func renderContent(_ text: String) {
+        guard text != lastRenderedText else { return }
         lastRenderedText = text
-        lastRenderedTheme = theme
 
-        guard isPageLoaded, textChanged || themeChanged else { return }
+        guard isPageLoaded else { return }
 
-        if textChanged {
-            let escaped = escapeForTemplateLiteral(text)
-            let js = "window.renderMarkdown(`\(escaped)`); window.setTheme('\(theme)');"
-            webView?.evaluateJavaScript(js)
-        } else if themeChanged {
-            webView?.evaluateJavaScript("window.setTheme('\(theme)');")
-        }
+        let escaped = escapeForTemplateLiteral(text)
+        let js = "window.renderMarkdown(`\(escaped)`);"
+        webView?.evaluateJavaScript(js)
     }
 
     func scrollToHeading(_ id: String) {
@@ -64,16 +56,23 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         webView?.evaluateJavaScript("window.resetFontSize();")
     }
 
-    func setTheme(_ name: String) {
-        lastRenderedTheme = name
-        webView?.evaluateJavaScript("window.setTheme('\(name)');")
-    }
-
     private func escapeForTemplateLiteral(_ string: String) -> String {
-        string
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "`", with: "\\`")
-            .replacingOccurrences(of: "$", with: "\\$")
+        var utf8 = Array(string.utf8)
+        var i = utf8.count - 1
+        // Walk backwards so insertions don't shift unprocessed indices
+        while i >= 0 {
+            let byte = utf8[i]
+            if byte == 0x5C { // backslash
+                utf8.insert(0x5C, at: i)
+            } else if byte == 0x60 { // backtick
+                utf8[i] = 0x60
+                utf8.insert(0x5C, at: i)
+            } else if byte == 0x24 { // dollar
+                utf8.insert(0x5C, at: i)
+            }
+            i -= 1
+        }
+        return String(bytes: utf8, encoding: .utf8) ?? string
     }
 }
 
@@ -105,10 +104,9 @@ extension WebViewCoordinator: WKNavigationDelegate {
     nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         Task { @MainActor in
             self.isPageLoaded = true
-            // Render any content that arrived before page load
-            if let text = self.lastRenderedText, let theme = self.lastRenderedTheme {
+            if let text = self.lastRenderedText {
                 let escaped = self.escapeForTemplateLiteral(text)
-                let js = "window.renderMarkdown(`\(escaped)`); window.setTheme('\(theme)');"
+                let js = "window.renderMarkdown(`\(escaped)`);"
                 self.webView?.evaluateJavaScript(js)
             }
         }

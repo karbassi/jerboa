@@ -29,15 +29,12 @@ class PreviewViewController: NSViewController, QLPreviewingController {
             webView.navigationDelegate = self
         }
 
-        let defaults = UserDefaults(suiteName: "group.com.karbassi.Jerboa")
-        let theme = defaults?.string(forKey: "jerboa-theme") ?? "classic"
-        let js = "window.renderMarkdown(`\(escaped)`); window.setTheme('\(theme)');"
+        let js = "window.renderMarkdown(`\(escaped)`);"
 
         await MainActor.run {
             webView.loadFileURL(htmlURL, allowingReadAccessTo: resourceDir)
         }
 
-        // Store the JS to execute after page loads
         pendingJS = js
     }
 

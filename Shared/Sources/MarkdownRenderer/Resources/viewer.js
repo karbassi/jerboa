@@ -1,43 +1,54 @@
 'use strict';
 
-// ── Initialize markdown-it ──
+// ── Initialize markdown-it and pre-warm the JIT ──
 var md = window.markdownit({
   html: true,
   typographer: true,
   breaks: true,
   linkify: true
-}).use(window.markdownitFootnote);
+}).use(window.markdownitFootnote)
+  .use(window.markdownitTaskLists);
+md.render('');
 
 // ── DOM refs ──
 var viewer = document.getElementById('viewer');
-var tocSidebar = document.getElementById('toc-sidebar');
-var tocList = document.getElementById('toc-list');
 var metaHeader = document.getElementById('meta-header');
 var content = document.getElementById('content');
 
 // ── Native app detection ──
 var isNativeApp = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.tocData);
 
-// Hide in-page TOC sidebar when running inside the native app (sidebar is provided natively)
-if (isNativeApp && tocSidebar) {
-  tocSidebar.style.display = 'none';
-}
+// ── Parse YAML frontmatter (simple key: value, no dependency) ──
+var _frontmatterRe = /^---\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)(?:\r?\n|$)([\s\S]*)$/;
 
-// ── Parse YAML frontmatter ──
 function parseFrontmatter(text) {
-  var match = text.match(/^---\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)(?:\r?\n|$)([\s\S]*)$/);
+  var match = text.match(_frontmatterRe);
   if (!match) return { meta: null, body: text };
 
-  try {
-    var parsed = jsyaml.load(match[1]);
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      return { meta: parsed, body: match[2] };
+  var meta = {};
+  var lines = match[1].split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var colon = line.indexOf(':');
+    if (colon === -1) continue;
+    var key = line.substring(0, colon).trim();
+    var val = line.substring(colon + 1).trim();
+    if (!key) continue;
+    // Strip surrounding quotes
+    if (val.length >= 2 &&
+        ((val[0] === '"' && val[val.length - 1] === '"') ||
+         (val[0] === "'" && val[val.length - 1] === "'"))) {
+      val = val.substring(1, val.length - 1);
     }
-  } catch (e) {
-    // Fall through to return unparsed body
+    // Coerce booleans
+    if (val === 'true') val = true;
+    else if (val === 'false') val = false;
+    meta[key] = val;
   }
 
-  return { meta: null, body: text };
+  var hasKeys = false;
+  for (var k in meta) { hasKeys = true; break; }
+  return { meta: hasKeys ? meta : null, body: match[2] };
 }
 
 // ── Heading ID (pandoc-compatible) ──
@@ -51,13 +62,15 @@ function headingId(text) {
     .replace(/^-|-$/g, '');
 }
 
+// ── HTML escaping via string replacement (no DOM) ──
+var _escapeMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+var _escapeRe = /[&<>"']/g;
+
 function escapeHtml(str) {
-  var div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  return str.replace(_escapeRe, function(ch) { return _escapeMap[ch]; });
 }
 
-// ── Build metadata header (matches template.html structure) ──
+// ── Build metadata header ──
 function buildMetaHeader(meta) {
   if (!meta) { metaHeader.innerHTML = ''; return; }
 
@@ -68,7 +81,7 @@ function buildMetaHeader(meta) {
   }
 
   if (meta.title) {
-    html += '<h1 class="title">' + escapeHtml(meta.title) + '</h1>';
+    html += '<h1 class="title">' + escapeHtml(String(meta.title)) + '</h1>';
     document.title = meta.title + ' \u2014 Markdown Viewer';
   }
 
@@ -83,7 +96,7 @@ function buildMetaHeader(meta) {
     html += '<table class="metadata">';
     entries.forEach(function(entry) {
       html += '<tr><th>' + escapeHtml(entry[0].charAt(0).toUpperCase() + entry[0].slice(1)) + '</th>';
-      html += '<td>' + escapeHtml(entry[1]) + '</td></tr>';
+      html += '<td>' + escapeHtml(String(entry[1])) + '</td></tr>';
     });
     html += '</table>';
   }
@@ -92,42 +105,23 @@ function buildMetaHeader(meta) {
   metaHeader.innerHTML = html;
 }
 
-// ── Add heading IDs and build TOC (nested ul for h3 under h2) ──
-function processHeadingsAndToc(container) {
-  var headings = container.querySelectorAll('h2, h3');
-  var tocHtml = '';
-  var inSub = false;
-
-  headings.forEach(function(h) {
-    var id = headingId(h.textContent);
-    h.id = id;
-    var level = h.tagName.toLowerCase();
-
-    if (level === 'h2') {
-      if (inSub) { tocHtml += '</ul></li>'; inSub = false; }
-      tocHtml += '<li><a href="#' + id + '">' + escapeHtml(h.textContent) + '</a>';
-    } else {
-      if (!inSub) { tocHtml += '<ul>'; inSub = true; }
-      tocHtml += '<li><a href="#' + id + '">' + escapeHtml(h.textContent) + '</a></li>';
-    }
+// ── Assign heading IDs ──
+function assignHeadingIds(container) {
+  container.querySelectorAll('h2, h3').forEach(function(h) {
+    h.id = headingId(h.textContent);
   });
-
-  if (inSub) tocHtml += '</ul></li>';
-  else if (tocHtml) tocHtml += '</li>';
-
-  tocList.innerHTML = tocHtml;
 }
 
-// ── Post-process footnotes into inline tooltips ──
+// ── Post-process footnotes ──
+var _backrefRe = /<a[^>]*class="footnote-backref"[^>]*>[\s\S]*?<\/a>/g;
+
 function processFootnotes(container) {
   var footnotesSection = container.querySelector('section.footnotes');
   if (!footnotesSection) return;
 
   var footnoteContents = {};
   footnotesSection.querySelectorAll('li.footnote-item').forEach(function(li) {
-    var clone = li.cloneNode(true);
-    clone.querySelectorAll('.footnote-backref').forEach(function(a) { a.remove(); });
-    footnoteContents[li.id] = clone.innerHTML.trim();
+    footnoteContents[li.id] = li.innerHTML.replace(_backrefRe, '').trim();
   });
 
   container.querySelectorAll('sup.footnote-ref').forEach(function(sup) {
@@ -148,35 +142,24 @@ function processFootnotes(container) {
   footnotesSection.remove();
 }
 
-// ── Scroll spy (JS fallback) ──
-function initScrollSpy() {
-  var links = tocSidebar.querySelectorAll('a[href^="#"]');
-  var sects = [];
-  links.forEach(function(l) {
-    var el = document.getElementById(l.getAttribute('href').slice(1));
-    if (el) sects.push({ el: el, link: l });
-  });
-
-  function update() {
-    var cur = null;
-    var y = window.scrollY + 80;
-    for (var i = 0; i < sects.length; i++) {
-      if (sects[i].el.offsetTop <= y) cur = sects[i];
-    }
-    links.forEach(function(l) { l.classList.remove('active'); });
-    if (cur) cur.link.classList.add('active');
-  }
-
-  window.addEventListener('scroll', update, { passive: true });
-  update();
-}
-
 // ── Native app scroll tracking ──
+var _scrollHandler = null;
+var _lastReportedId = null;
+
 function initNativeScrollTracking() {
   var headings = document.querySelectorAll('h2[id], h3[id]');
-  if (!headings.length) return;
 
-  var lastReportedId = null;
+  if (_scrollHandler) {
+    window.removeEventListener('scroll', _scrollHandler);
+    _scrollHandler = null;
+  }
+
+  if (!headings.length) {
+    _lastReportedId = null;
+    return;
+  }
+
+  var ticking = false;
 
   function reportActiveHeading() {
     var cur = null;
@@ -185,19 +168,31 @@ function initNativeScrollTracking() {
       if (headings[i].offsetTop <= y) cur = headings[i];
     }
     var id = cur ? cur.id : '';
-    if (id !== lastReportedId) {
-      lastReportedId = id;
+    if (id !== _lastReportedId) {
+      _lastReportedId = id;
       if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.scrollPosition) {
         window.webkit.messageHandlers.scrollPosition.postMessage(id);
       }
     }
   }
 
-  window.addEventListener('scroll', reportActiveHeading, { passive: true });
+  _scrollHandler = function() {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(function() {
+        reportActiveHeading();
+        ticking = false;
+      });
+    }
+  };
+
+  window.addEventListener('scroll', _scrollHandler, { passive: true });
   reportActiveHeading();
 }
 
 // ── Render markdown ──
+var _hasRendered = false;
+
 window.renderMarkdown = function(text) {
   var parsed = parseFrontmatter(text);
   buildMetaHeader(parsed.meta);
@@ -206,40 +201,38 @@ window.renderMarkdown = function(text) {
     document.title = 'Markdown Viewer';
   }
 
+  // Save scroll position for re-renders
+  var scrollY = _hasRendered ? window.scrollY : 0;
+
   content.innerHTML = md.render(parsed.body);
   processFootnotes(content);
-  processHeadingsAndToc(content);
+  assignHeadingIds(content);
 
-  // Activate viewer
   viewer.classList.add('active');
-  if (tocSidebar) tocSidebar.classList.add('active');
 
-  // Post TOC data to native app
+  // Restore scroll position on re-renders
+  if (_hasRendered) {
+    window.scrollTo(0, scrollY);
+  } else {
+    _hasRendered = true;
+  }
+
+  // Defer non-critical work
   if (isNativeApp) {
-    var headings = content.querySelectorAll('h2[id], h3[id]');
-    var entries = [];
-    headings.forEach(function(h) {
-      entries.push({
-        id: h.id,
-        title: h.textContent,
-        level: parseInt(h.tagName.charAt(1), 10)
+    (window.requestIdleCallback || requestAnimationFrame)(function() {
+      var headings = content.querySelectorAll('h2[id], h3[id]');
+      var entries = [];
+      headings.forEach(function(h) {
+        entries.push({
+          id: h.id,
+          title: h.textContent,
+          level: parseInt(h.tagName.charAt(1), 10)
+        });
       });
+      window.webkit.messageHandlers.tocData.postMessage(JSON.stringify(entries));
+      initNativeScrollTracking();
     });
-    window.webkit.messageHandlers.tocData.postMessage(JSON.stringify(entries));
-    initNativeScrollTracking();
   }
-
-  // Scroll spy for in-page TOC (skip if browser supports CSS scroll-target-group)
-  if (!isNativeApp && !CSS.supports('scroll-target-group', 'auto')) {
-    initScrollSpy();
-  }
-
-  window.scrollTo(0, 0);
-};
-
-// ── Set theme (called from native app) ──
-window.setTheme = function(name) {
-  document.body.setAttribute('data-theme', name);
 };
 
 // ── Scroll to heading (called from native app) ──

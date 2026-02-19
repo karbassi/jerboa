@@ -4,7 +4,6 @@ struct ContentView: View {
     @Binding var document: MarkdownDocument
     let fileURL: URL?
     @StateObject private var coordinator = WebViewCoordinator()
-    @Environment(ThemeManager.self) private var themeManager
     @State private var fileWatcher: FileWatcher?
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
@@ -23,7 +22,6 @@ struct ContentView: View {
         } detail: {
             MarkdownWebView(
                 markdownText: document.text,
-                theme: themeManager.currentTheme.rawValue,
                 coordinator: coordinator
             )
             .accessibilityIdentifier("markdown-webview")

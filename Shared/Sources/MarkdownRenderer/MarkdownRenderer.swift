@@ -1,10 +1,5 @@
 import Foundation
 
-public enum Theme: String, CaseIterable, Sendable {
-    case classic
-    case modern
-}
-
 public enum MarkdownRenderer {
     /// Returns the contents of viewer.html from the bundle
     public static func viewerHTML() throws -> String {
@@ -22,11 +17,6 @@ public enum MarkdownRenderer {
     /// Returns the URL of the Resources directory for WKWebView base URL
     public static func resourceDirectoryURL() -> URL? {
         viewerHTMLURL()?.deletingLastPathComponent()
-    }
-
-    /// Returns the URL for a specific theme CSS file
-    public static func cssURL(for theme: Theme) -> URL? {
-        Bundle.module.url(forResource: theme.rawValue, withExtension: "css")
     }
 
     public enum RendererError: Error, LocalizedError {

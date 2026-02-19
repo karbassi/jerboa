@@ -1,5 +1,4 @@
 import SwiftUI
-import MarkdownRenderer
 
 struct CoordinatorKey: FocusedValueKey {
     typealias Value = WebViewCoordinator
@@ -14,49 +13,29 @@ extension FocusedValues {
 
 @main
 struct JerboaApp: App {
-    @State private var themeManager = ThemeManager()
     @FocusedValue(\.coordinator) private var coordinator
 
     var body: some Scene {
         DocumentGroup(viewing: MarkdownDocument.self) { file in
             ContentView(document: file.$document, fileURL: file.fileURL)
-                .environment(themeManager)
         }
         .defaultSize(width: 900, height: 700)
         .commands {
             CommandGroup(after: .toolbar) {
-                ForEach(Theme.allCases, id: \.self) { theme in
-                    Button {
-                        themeManager.currentTheme = theme
-                    } label: {
-                        if themeManager.currentTheme == theme {
-                            Label(theme.rawValue.capitalized, systemImage: "checkmark")
-                        } else {
-                            Text(theme.rawValue.capitalized)
-                        }
-                    }
-                    .keyboardShortcut(
-                        theme == .classic ? "1" : "2",
-                        modifiers: [.command, .shift]
-                    )
+                Button("Reset Font Size") {
+                    coordinator?.resetFontSize()
                 }
-
-                Divider()
-
-                Button("Increase Font Size") {
-                    coordinator?.increaseFontSize()
-                }
-                .keyboardShortcut("+", modifiers: .command)
+                .keyboardShortcut("0", modifiers: .command)
 
                 Button("Decrease Font Size") {
                     coordinator?.decreaseFontSize()
                 }
                 .keyboardShortcut("-", modifiers: .command)
 
-                Button("Reset Font Size") {
-                    coordinator?.resetFontSize()
+                Button("Increase Font Size") {
+                    coordinator?.increaseFontSize()
                 }
-                .keyboardShortcut("0", modifiers: .command)
+                .keyboardShortcut("+", modifiers: .command)
             }
 
             CommandGroup(before: .sidebar) {
@@ -69,11 +48,6 @@ struct JerboaApp: App {
                 }
                 .keyboardShortcut("s", modifiers: [.command, .control])
             }
-        }
-
-        Settings {
-            SettingsView()
-                .environment(themeManager)
         }
     }
 }

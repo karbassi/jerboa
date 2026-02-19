@@ -4,7 +4,6 @@ import MarkdownRenderer
 
 struct MarkdownWebView: NSViewRepresentable {
     let markdownText: String
-    let theme: String
     var coordinator: WebViewCoordinator
 
     func makeNSView(context: Context) -> WKWebView {
@@ -25,6 +24,6 @@ struct MarkdownWebView: NSViewRepresentable {
     }
 
     func updateNSView(_ webView: WKWebView, context: Context) {
-        coordinator.renderContent(markdownText, theme: theme)
+        coordinator.renderContent(markdownText)
     }
 }

@@ -6,7 +6,9 @@ final class FileWatcher {
 
     private var fileDescriptor: Int32 = -1
     private var source: DispatchSourceFileSystemObject?
+    private var debounceWork: DispatchWorkItem?
     private let url: URL
+    private let debounceInterval: TimeInterval = 0.1
 
     init(url: URL) {
         self.url = url
@@ -14,6 +16,8 @@ final class FileWatcher {
     }
 
     func stop() {
+        debounceWork?.cancel()
+        debounceWork = nil
         source?.cancel()
         source = nil
         fileDescriptor = -1
@@ -38,7 +42,7 @@ final class FileWatcher {
             if flags.contains(.rename) || flags.contains(.delete) {
                 self.startWatching()
             }
-            self.onChange?()
+            self.scheduleChange()
         }
 
         source.setCancelHandler { [fd = fileDescriptor] in
@@ -47,5 +51,14 @@ final class FileWatcher {
 
         source.resume()
         self.source = source
+    }
+
+    private func scheduleChange() {
+        debounceWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.onChange?()
+        }
+        debounceWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + debounceInterval, execute: work)
     }
 }

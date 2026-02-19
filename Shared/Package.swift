@@ -14,11 +14,10 @@ let package = Package(
             resources: [
                 .copy("Resources/viewer.html"),
                 .copy("Resources/base.css"),
-                .copy("Resources/classic.css"),
                 .copy("Resources/modern.css"),
                 .copy("Resources/markdown-it.min.js"),
                 .copy("Resources/markdown-it-footnote.min.js"),
-                .copy("Resources/js-yaml.min.js"),
+                .copy("Resources/markdown-it-task-lists.min.js"),
                 .copy("Resources/viewer.js")
             ]
         ),
