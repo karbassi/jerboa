@@ -1,0 +1,121 @@
+name: Jerboa
+options:
+  bundleIdPrefix: com.karbassi
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+
+packages:
+  MarkdownRenderer:
+    path: Shared
+
+targets:
+  Jerboa:
+    type: application
+    platform: macOS
+    sources:
+      - App
+    dependencies:
+      - package: MarkdownRenderer
+      - target: JerboaQuickLook
+        embed: true
+        codeSign: true
+        buildPhase:
+          copyFiles:
+            destination: plugins
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.karbassi.Jerboa
+        INFOPLIST_FILE: App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/Jerboa.entitlements
+        SWIFT_VERSION: "6.0"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        PRODUCT_NAME: Jerboa
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Markdown Document
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Default
+            LSItemContentTypes:
+              - net.daringfireball.markdown
+              - public.plain-text
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: net.daringfireball.markdown
+            UTTypeDescription: Markdown Document
+            UTTypeConformsTo:
+              - public.plain-text
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - md
+                - markdown
+                - mdown
+                - mkd
+  JerboaQuickLook:
+    type: app-extension
+    platform: macOS
+    sources:
+      - QuickLook
+    dependencies:
+      - package: MarkdownRenderer
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.karbassi.Jerboa.QuickLook
+        INFOPLIST_FILE: QuickLook/Info.plist
+        SWIFT_VERSION: "6.0"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+    info:
+      path: QuickLook/Info.plist
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.quicklook.preview
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PreviewViewController
+        QLSupportedContentTypes:
+          - net.daringfireball.markdown
+  JerboaTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests/JerboaTests
+    dependencies:
+      - target: Jerboa
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: YES
+  JerboaUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - Tests/JerboaUITests
+    dependencies:
+      - target: Jerboa
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Automatic
+
+schemes:
+  Jerboa:
+    build:
+      targets:
+        Jerboa: all
+        JerboaTests: [test]
+    run:
+      config: Debug
+    test:
+      targets:
+        - JerboaTests
+  JerboaUITests:
+    build:
+      targets:
+        Jerboa: all
+        JerboaUITests: [test]
+    run:
+      config: Debug
+    test:
+      targets:
+        - JerboaUITests

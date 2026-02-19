@@ -1,0 +1,11 @@
+excluded:
+  - .build
+  - Shared/.build
+
+disabled_rules:
+  - trailing_comma
+  - identifier_name
+
+opt_in_rules:
+  - empty_count
+  - closure_spacing

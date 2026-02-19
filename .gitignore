@@ -1,0 +1,8 @@
+Jerboa.xcodeproj/
+build/
+.build/
+Shared/.build/
+DerivedData/
+*.xcuserdata
+*.swp
+.DS_Store

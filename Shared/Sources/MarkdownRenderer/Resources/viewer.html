@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markdown Viewer</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="classic.css">
+<link rel="stylesheet" href="modern.css">
+</head>
+<body data-theme="classic">
+<div id="viewer">
+  <nav id="toc-sidebar">
+    <div class="toc-title">On this page</div>
+    <ul id="toc-list"></ul>
+  </nav>
+  <main>
+    <div id="meta-header"></div>
+    <div id="content"></div>
+  </main>
+</div>
+<script src="markdown-it.min.js"></script>
+<script src="markdown-it-footnote.min.js"></script>
+<script src="js-yaml.min.js"></script>
+<script src="viewer.js"></script>
+</body>
+</html>
