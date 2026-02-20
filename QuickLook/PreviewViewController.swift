@@ -19,10 +19,7 @@ class PreviewViewController: NSViewController, QLPreviewingController {
                       ?? String(data: data, encoding: .isoLatin1) else {
             throw CocoaError(.fileReadInapplicableStringEncoding)
         }
-        let escaped = text
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "`", with: "\\`")
-            .replacingOccurrences(of: "$", with: "\\$")
+        let escaped = MarkdownRenderer.escapeForTemplateLiteral(text)
 
         guard let htmlURL = MarkdownRenderer.viewerHTMLURL(),
               let resourceDir = MarkdownRenderer.resourceDirectoryURL() else {

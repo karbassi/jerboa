@@ -19,6 +19,24 @@ public enum MarkdownRenderer {
         viewerHTMLURL()?.deletingLastPathComponent()
     }
 
+    /// Escapes a string for safe use inside a JS template literal.
+    public static func escapeForTemplateLiteral(_ string: String) -> String {
+        var utf8 = Array(string.utf8)
+        var i = utf8.count - 1
+        while i >= 0 {
+            let byte = utf8[i]
+            if byte == 0x5C { // backslash
+                utf8.insert(0x5C, at: i)
+            } else if byte == 0x60 { // backtick
+                utf8.insert(0x5C, at: i)
+            } else if byte == 0x24 { // dollar
+                utf8.insert(0x5C, at: i)
+            }
+            i -= 1
+        }
+        return String(bytes: utf8, encoding: .utf8) ?? string
+    }
+
     public enum RendererError: Error, LocalizedError {
         case resourceNotFound(String)
 

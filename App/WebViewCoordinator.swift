@@ -1,4 +1,5 @@
 import WebKit
+import MarkdownRenderer
 
 struct TOCEntry: Identifiable, Codable, Equatable {
     let id: String
@@ -41,7 +42,7 @@ final class WebViewCoordinator: NSObject, ObservableObject {
 
         guard isPageLoaded else { return }
 
-        let escaped = escapeForTemplateLiteral(text)
+        let escaped = MarkdownRenderer.escapeForTemplateLiteral(text)
         let js = "window.renderMarkdown(`\(escaped)`);"
         webView?.evaluateJavaScript(js)
     }
@@ -67,24 +68,6 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         webView?.evaluateJavaScript("window.resetFontSize();")
     }
 
-    private func escapeForTemplateLiteral(_ string: String) -> String {
-        var utf8 = Array(string.utf8)
-        var i = utf8.count - 1
-        // Walk backwards so insertions don't shift unprocessed indices
-        while i >= 0 {
-            let byte = utf8[i]
-            if byte == 0x5C { // backslash
-                utf8.insert(0x5C, at: i)
-            } else if byte == 0x60 { // backtick
-                utf8[i] = 0x60
-                utf8.insert(0x5C, at: i)
-            } else if byte == 0x24 { // dollar
-                utf8.insert(0x5C, at: i)
-            }
-            i -= 1
-        }
-        return String(bytes: utf8, encoding: .utf8) ?? string
-    }
 }
 
 extension WebViewCoordinator: WKScriptMessageHandler {
@@ -132,7 +115,7 @@ extension WebViewCoordinator: WKNavigationDelegate {
         Task { @MainActor in
             self.isPageLoaded = true
             if let text = self.lastRenderedText {
-                let escaped = self.escapeForTemplateLiteral(text)
+                let escaped = MarkdownRenderer.escapeForTemplateLiteral(text)
                 let js = "window.renderMarkdown(`\(escaped)`);"
                 self.webView?.evaluateJavaScript(js)
             }
