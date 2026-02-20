@@ -47,7 +47,9 @@ final class WebViewCoordinator: NSObject, ObservableObject {
     }
 
     func scrollToHeading(_ id: String) {
-        webView?.evaluateJavaScript("window.scrollToHeading('\(id)');")
+        let escaped = id.replacingOccurrences(of: "\\", with: "\\\\")
+                        .replacingOccurrences(of: "'", with: "\\'")
+        webView?.evaluateJavaScript("window.scrollToHeading('\(escaped)');")
     }
 
     func increaseFontSize() {
