@@ -28,7 +28,7 @@ function parseFrontmatter(text) {
   var meta = {};
   var lines = match[1].split('\n');
   for (var i = 0; i < lines.length; i++) {
-    var line = lines[i];
+    var line = lines[i].replace(/\r$/, '');
     var colon = line.indexOf(':');
     if (colon === -1) continue;
     var key = line.substring(0, colon).trim();
