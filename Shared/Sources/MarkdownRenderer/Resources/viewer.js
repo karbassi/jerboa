@@ -109,12 +109,12 @@ function buildMetaHeader(meta) {
 function assignHeadingIds(container) {
   var seen = {};
   container.querySelectorAll('h2, h3').forEach(function(h) {
-    var base = headingId(h.textContent);
+    var base = headingId(h.textContent) || 'heading';
     var id = base;
-    if (seen[id]) {
+    if (seen[base]) {
       id = base + '-' + seen[base];
     }
-    seen[base] = (seen[base] || 1) + 1;
+    seen[base] = (seen[base] || 0) + 1;
     h.id = id;
   });
 }
