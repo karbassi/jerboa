@@ -253,7 +253,9 @@ window.renderMarkdown = function(text) {
 // ── Scroll to heading (called from native app) ──
 window.scrollToHeading = function(id) {
   var el = document.getElementById(id);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!el) return;
+  var motion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+  el.scrollIntoView({ behavior: motion, block: 'start' });
 };
 
 // ── Font size controls (called from native app) ──
