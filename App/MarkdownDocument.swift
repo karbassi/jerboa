@@ -3,7 +3,6 @@ import UniformTypeIdentifiers
 
 struct MarkdownDocument: FileDocument {
     var text: String
-    var fileURL: URL?
 
     static var readableContentTypes: [UTType] {
         [.init(importedAs: "net.daringfireball.markdown"), .plainText]
