@@ -105,10 +105,17 @@ function buildMetaHeader(meta) {
   metaHeader.innerHTML = html;
 }
 
-// ── Assign heading IDs ──
+// ── Assign heading IDs (deduplicated) ──
 function assignHeadingIds(container) {
+  var seen = {};
   container.querySelectorAll('h2, h3').forEach(function(h) {
-    h.id = headingId(h.textContent);
+    var base = headingId(h.textContent);
+    var id = base;
+    if (seen[id]) {
+      id = base + '-' + seen[base];
+    }
+    seen[base] = (seen[base] || 1) + 1;
+    h.id = id;
   });
 }
 
