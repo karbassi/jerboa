@@ -26,6 +26,15 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         webView.navigationDelegate = self
     }
 
+    func tearDown() {
+        guard let webView else { return }
+        let contentController = webView.configuration.userContentController
+        contentController.removeScriptMessageHandler(forName: "tocData")
+        contentController.removeScriptMessageHandler(forName: "scrollPosition")
+        webView.navigationDelegate = nil
+        self.webView = nil
+    }
+
     func renderContent(_ text: String) {
         guard text != lastRenderedText else { return }
         lastRenderedText = text

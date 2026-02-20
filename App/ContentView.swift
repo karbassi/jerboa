@@ -37,6 +37,7 @@ struct ContentView: View {
             }
         }
         .onDisappear {
+            coordinator.tearDown()
             fileWatcher?.stop()
         }
         .onChange(of: columnVisibility) { _, newValue in
