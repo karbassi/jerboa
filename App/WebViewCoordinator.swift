@@ -34,6 +34,7 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         contentController.removeScriptMessageHandler(forName: "scrollPosition")
         webView.navigationDelegate = nil
         self.webView = nil
+        self.isPageLoaded = false
     }
 
     func renderContent(_ text: String) {
