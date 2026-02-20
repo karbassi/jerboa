@@ -22,7 +22,7 @@ class PreviewViewController: NSViewController, QLPreviewingController {
 
         guard let htmlURL = MarkdownRenderer.viewerHTMLURL(),
               let resourceDir = MarkdownRenderer.resourceDirectoryURL() else {
-            return
+            throw CocoaError(.fileReadCorruptFile)
         }
 
         await MainActor.run {
