@@ -42,6 +42,22 @@ class PreviewViewController: NSViewController, QLPreviewingController {
 }
 
 extension PreviewViewController: WKNavigationDelegate {
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+        if navigationAction.navigationType == .other {
+            decisionHandler(.allow)
+        } else if let url = navigationAction.request.url,
+                  url.scheme == "https" || url.scheme == "http" {
+            NSWorkspace.shared.open(url)
+            decisionHandler(.cancel)
+        } else {
+            decisionHandler(.cancel)
+        }
+    }
+
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         if let js = pendingJS {
             pendingJS = nil

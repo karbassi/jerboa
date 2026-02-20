@@ -112,6 +112,22 @@ extension WebViewCoordinator: WKScriptMessageHandler {
 }
 
 extension WebViewCoordinator: WKNavigationDelegate {
+    nonisolated func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+        if navigationAction.navigationType == .other {
+            decisionHandler(.allow)
+        } else if let url = navigationAction.request.url,
+                  url.scheme == "https" || url.scheme == "http" {
+            NSWorkspace.shared.open(url)
+            decisionHandler(.cancel)
+        } else {
+            decisionHandler(.cancel)
+        }
+    }
+
     nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         Task { @MainActor in
             self.isPageLoaded = true
