@@ -4,15 +4,24 @@ import Foundation
 final class FileWatcher {
     var onChange: (() -> Void)?
 
-    private var fileDescriptor: Int32 = -1
-    private var source: DispatchSourceFileSystemObject?
-    private var debounceWork: DispatchWorkItem?
+    private nonisolated(unsafe) var fileDescriptor: Int32 = -1
+    private nonisolated(unsafe) var source: DispatchSourceFileSystemObject?
+    private nonisolated(unsafe) var debounceWork: DispatchWorkItem?
     private let url: URL
     private let debounceInterval: TimeInterval = 0.1
 
     init(url: URL) {
         self.url = url
         startWatching()
+    }
+
+    deinit {
+        let source = self.source
+        let work = self.debounceWork
+        DispatchQueue.main.async {
+            work?.cancel()
+            source?.cancel()
+        }
     }
 
     func stop() {
