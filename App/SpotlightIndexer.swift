@@ -12,6 +12,10 @@ enum SpotlightIndexer {
             attributeSet: attributeSet
         )
 
-        CSSearchableIndex.default().indexSearchableItems([item])
+        CSSearchableIndex.default().indexSearchableItems([item]) { error in
+            if let error {
+                print("Spotlight indexing failed: \(error.localizedDescription)")
+            }
+        }
     }
 }
