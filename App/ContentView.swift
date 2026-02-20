@@ -65,9 +65,11 @@ extension ContentView {
         guard let url = fileURL else { return }
         let watcher = FileWatcher(url: url)
         watcher.onChange = { [url] in
-            guard let data = try? Data(contentsOf: url),
-                  let text = String(data: data, encoding: .utf8) else { return }
-            document.text = text
+            Task.detached(priority: .userInitiated) {
+                guard let data = try? Data(contentsOf: url),
+                      let text = String(data: data, encoding: .utf8) else { return }
+                await MainActor.run { document.text = text }
+            }
         }
         fileWatcher = watcher
     }
