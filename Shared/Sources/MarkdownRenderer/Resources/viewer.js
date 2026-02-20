@@ -201,6 +201,14 @@ function initNativeScrollTracking() {
 var _hasRendered = false;
 
 window.renderMarkdown = function(text) {
+  if (!text.trim()) {
+    metaHeader.innerHTML = '';
+    content.innerHTML = '<p class="empty-state">Empty document</p>';
+    viewer.classList.add('active');
+    _hasRendered = true;
+    return;
+  }
+
   var parsed = parseFrontmatter(text);
   buildMetaHeader(parsed.meta);
 
