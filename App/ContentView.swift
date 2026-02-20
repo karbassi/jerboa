@@ -5,6 +5,7 @@ struct ContentView: View {
     let fileURL: URL?
     @StateObject private var coordinator = WebViewCoordinator()
     @State private var fileWatcher: FileWatcher?
+    @AppStorage("sidebarVisible") private var sidebarVisible = true
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
     var body: some View {
@@ -29,6 +30,7 @@ struct ContentView: View {
         .frame(minWidth: 700, minHeight: 500)
         .focusedSceneValue(\.coordinator, coordinator)
         .onAppear {
+            columnVisibility = sidebarVisible ? .all : .detailOnly
             setupFileWatcher()
             if let fileURL {
                 SpotlightIndexer.index(fileURL: fileURL, text: document.text)
@@ -37,8 +39,27 @@ struct ContentView: View {
         .onDisappear {
             fileWatcher?.stop()
         }
+        .onChange(of: columnVisibility) { _, newValue in
+            sidebarVisible = (newValue != .detailOnly)
+        }
+        .background(WindowAccessor())
     }
 
+}
+
+private struct WindowAccessor: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            view.window?.setFrameAutosaveName("JerboaMainWindow")
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
+extension ContentView {
     private func setupFileWatcher() {
         guard let url = fileURL else { return }
         let watcher = FileWatcher(url: url)
