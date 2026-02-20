@@ -35,19 +35,10 @@ struct JerboaApp: App {
                 Button("Increase Font Size") {
                     coordinator?.increaseFontSize()
                 }
-                .keyboardShortcut("+", modifiers: .command)
+                .keyboardShortcut("=", modifiers: .command)
             }
 
-            CommandGroup(before: .sidebar) {
-                Button("Toggle Sidebar") {
-                    NSApp.sendAction(
-                        #selector(NSSplitViewController.toggleSidebar(_:)),
-                        to: nil,
-                        from: nil
-                    )
-                }
-                .keyboardShortcut("s", modifiers: [.command, .control])
-            }
+
         }
     }
 }
