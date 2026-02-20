@@ -14,14 +14,21 @@ struct MarkdownDocument: FileDocument {
     }
 
     init(configuration: ReadConfiguration) throws {
-        guard let data = configuration.file.regularFileContents,
-              let string = String(data: data, encoding: .utf8) else {
+        guard let data = configuration.file.regularFileContents else {
             throw CocoaError(.fileReadCorruptFile)
         }
-        self.text = string
+        if let string = String(data: data, encoding: .utf8) {
+            self.text = string
+        } else if let string = String(data: data, encoding: .isoLatin1) {
+            self.text = string
+        } else {
+            throw CocoaError(.fileReadInapplicableStringEncoding)
+        }
     }
 
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        throw CocoaError(.fileWriteNoPermission)
+        throw CocoaError(.fileWriteNoPermission, userInfo: [
+            NSLocalizedDescriptionKey: "Jerboa is a read-only viewer."
+        ])
     }
 }
