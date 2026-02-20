@@ -39,6 +39,10 @@ class PreviewViewController: NSViewController, QLPreviewingController {
     }
 
     private var pendingJS: String?
+
+    deinit {
+        webView?.navigationDelegate = nil
+    }
 }
 
 extension PreviewViewController: WKNavigationDelegate {
