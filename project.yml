@@ -35,6 +35,10 @@ targets:
     info:
       path: App/Info.plist
       properties:
+        CFBundleURLTypes:
+          - CFBundleURLName: Jerboa
+            CFBundleURLSchemes:
+              - jerboa
         CFBundleDocumentTypes:
           - CFBundleTypeName: Markdown Document
             CFBundleTypeRole: Viewer

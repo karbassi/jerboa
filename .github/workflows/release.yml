@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: macos-26
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build and sign
+        run: |
+          xcodebuild build \
+            -scheme Jerboa \
+            -destination 'platform=macOS' \
+            -configuration Release \
+            CODE_SIGNING_ALLOWED=NO
+
+          APP=$(find ~/Library/Developer/Xcode/DerivedData/Jerboa-*/Build/Products/Release -name "Jerboa.app" -maxdepth 1 | head -1)
+          codesign --sign - --force --deep "$APP"
+
+      - name: Create zip
+        run: |
+          APP=$(find ~/Library/Developer/Xcode/DerivedData/Jerboa-*/Build/Products/Release -name "Jerboa.app" -maxdepth 1 | head -1)
+          ditto -c -k --sequesterRsrc --keepParent "$APP" Jerboa.zip
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" Jerboa.zip \
+            --title "${{ github.ref_name }}" \
+            --generate-notes
+
+      - name: Trigger homebrew-tap update
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          repository: karbassi/homebrew-tap
+          event-type: release
+          client-payload: '{"cask": "jerboa"}'

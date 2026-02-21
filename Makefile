@@ -4,7 +4,7 @@ APP_NAME = Jerboa.app
 CONFIGURATION = Release
 DERIVED_DATA = $(HOME)/Library/Developer/Xcode/DerivedData
 
-.PHONY: all generate build run test uitest test-package clean lint deploy
+.PHONY: all generate build run test uitest test-package clean lint deploy install zip
 
 all: generate build
 
@@ -60,18 +60,10 @@ sign: build
 	@app=$$(find $(DERIVED_DATA)/Jerboa-*/Build/Products/$(CONFIGURATION) -name "$(APP_NAME)" -maxdepth 1 2>/dev/null | head -1); \
 	codesign --sign - --force --deep "$$app"
 
-# Create DMG for distribution
-dmg: sign
+# Create zip for distribution
+zip: sign
 	@app=$$(find $(DERIVED_DATA)/Jerboa-*/Build/Products/$(CONFIGURATION) -name "$(APP_NAME)" -maxdepth 1 2>/dev/null | head -1); \
-	create-dmg \
-		--volname "Jerboa" \
-		--window-pos 200 120 \
-		--window-size 600 400 \
-		--icon-size 100 \
-		--icon "$(APP_NAME)" 150 190 \
-		--app-drop-link 450 190 \
-		Jerboa.dmg \
-		"$$app"
+	ditto -c -k --sequesterRsrc --keepParent "$$app" Jerboa.zip
 
 # Deploy to personal machine via Tailscale
 DEPLOY_HOST = personal
@@ -82,6 +74,16 @@ deploy: sign
 	@app=$$(find $(DERIVED_DATA)/Jerboa-*/Build/Products/$(CONFIGURATION) -name "$(APP_NAME)" -maxdepth 1 2>/dev/null | head -1); \
 	rsync -az -e "ssh $(SSH_OPTS)" "$$app" $(DEPLOY_HOST):$(DEPLOY_PATH)/ && \
 	ssh $(SSH_OPTS) $(DEPLOY_HOST) '/usr/bin/xattr -cr $(DEPLOY_PATH)/$(APP_NAME)'
+
+# Install app and CLI
+install: sign
+	@app=$$(find $(DERIVED_DATA)/Jerboa-*/Build/Products/$(CONFIGURATION) -name "$(APP_NAME)" -maxdepth 1 2>/dev/null | head -1); \
+	if [ -z "$$app" ]; then echo "App not found. Build first."; exit 1; fi; \
+	rm -rf /Applications/$(APP_NAME) && \
+	cp -R "$$app" /Applications/$(APP_NAME) && \
+	echo "Installed $(APP_NAME) to /Applications/" && \
+	ln -sf /Applications/$(APP_NAME)/Contents/MacOS/Jerboa /usr/local/bin/jerboa && \
+	echo "Symlinked jerboa to /usr/local/bin/jerboa"
 
 # Clean build artifacts
 clean:
