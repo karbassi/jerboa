@@ -4,13 +4,11 @@
 
 If you find a security vulnerability in Jerboa, please report it responsibly.
 
-**Do not open a public issue.** Instead, email [github@karbassi.com](mailto:github@karbassi.com) with:
+**Do not open a public issue.** Instead, use [GitHub's private vulnerability reporting](https://github.com/karbassi/jerboa/security/advisories/new) to submit:
 
 - Description of the vulnerability
 - Steps to reproduce
 - Potential impact
-
-You should receive a response within 48 hours.
 
 ## Scope
 
