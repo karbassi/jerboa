@@ -16,7 +16,9 @@
 
 ---
 
-Jerboa is a read-only Markdown viewer built with Swift and SwiftUI. It renders `.md` files with a clean, native-feeling interface — no editor, no bloat. Open a file, read it, done.
+Jerboa does one thing: render Markdown. No editor, no tabs, no sync, no accounts. It's a 2.5 MB app that opens instantly and gets out of your way.
+
+Built with Swift and SwiftUI, it uses the platform's native WebView for rendering — no Electron, no embedded browser engine. The result is an app that launches fast, uses minimal memory, and feels like it belongs on your Mac.
 
 ## Features
 
