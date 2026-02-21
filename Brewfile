@@ -1,2 +1,0 @@
-brew "xcodegen"
-brew "swiftlint"
