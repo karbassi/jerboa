@@ -99,6 +99,9 @@ struct JerboaApp: App {
         }
         .defaultSize(width: 900, height: 700)
         .commands {
+            CommandGroup(replacing: .saveItem) {}
+            CommandGroup(replacing: .pasteboard) {}
+            CommandGroup(replacing: .undoRedo) {}
             CommandGroup(after: .toolbar) {
                 Button("Reset Font Size") {
                     coordinator?.resetFontSize()
