@@ -27,7 +27,7 @@ Jerboa is a read-only Markdown viewer built with Swift and SwiftUI. It renders `
 - **Dark mode** follows your system appearance
 - **QuickLook extension** — preview Markdown files in Finder with spacebar
 - **Spotlight indexing** — opened files are searchable via Spotlight
-- **Font size controls** — <kbd>Cmd</kbd><kbd>=</kbd> / <kbd>Cmd</kbd><kbd>-</kbd> / <kbd>Cmd</kbd><kbd>0</kbd>
+- **Font size controls** — <kbd>Cmd</kbd><kbd>+</kbd> / <kbd>Cmd</kbd><kbd>-</kbd> / <kbd>Cmd</kbd><kbd>0</kbd>
 - **Footnote tooltips** — hover to read footnotes inline, no jumping to the bottom
 - **CLI support** — `jerboa file.md` from your terminal
 - **Custom URL scheme** — `jerboa://open?path=/path/to/file.md`
@@ -72,7 +72,7 @@ Or just double-click any `.md` file if Jerboa is your default Markdown viewer.
 
 | Shortcut | Action |
 | --- | --- |
-| <kbd>Cmd</kbd> <kbd>=</kbd> | Increase font size |
+| <kbd>Cmd</kbd> <kbd>+</kbd> | Increase font size |
 | <kbd>Cmd</kbd> <kbd>-</kbd> | Decrease font size |
 | <kbd>Cmd</kbd> <kbd>0</kbd> | Reset font size |
 
