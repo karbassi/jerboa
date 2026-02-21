@@ -2,7 +2,7 @@ import SwiftUI
 
 private let bundleID = "com.karbassi.Jerboa"
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     override init() {
         let args = Array(CommandLine.arguments.dropFirst())
 
@@ -75,6 +75,96 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSDocumentController.shared.openDocument(
             withContentsOf: fileURL, display: true) { _, _, _ in }
     }
+
+    // MARK: - Menu cleanup
+
+    func setupMenuDelegates() {
+        guard let mainMenu = NSApp.mainMenu else { return }
+        for item in mainMenu.items {
+            switch item.title {
+            case "Theme", "Help":
+                item.isHidden = true
+            case "File":
+                item.submenu?.delegate = self
+                if let submenu = item.submenu {
+                    cleanUpFileMenu(submenu)
+                    cleanUpSeparators(submenu)
+                }
+            case "Edit":
+                item.submenu?.delegate = self
+                if let submenu = item.submenu {
+                    cleanUpEditMenu(submenu)
+                    cleanUpSeparators(submenu)
+                }
+            default:
+                break
+            }
+        }
+    }
+
+    // MARK: - NSMenuDelegate
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        switch menu.title {
+        case "File":
+            cleanUpFileMenu(menu)
+        case "Edit":
+            cleanUpEditMenu(menu)
+        default:
+            break
+        }
+        cleanUpSeparators(menu)
+    }
+
+    private func cleanUpFileMenu(_ menu: NSMenu) {
+        let hideActions: Set<String> = [
+            "newDocument:",
+            "saveDocument:", "saveDocumentAs:",
+            "duplicateDocument:", "renameDocument:", "moveDocument:",
+            "browseDocumentVersions:",
+        ]
+        let hideByTitle: Set<String> = ["Share", "Revert To"]
+        for item in menu.items {
+            if item.isSeparatorItem { continue }
+            if let action = item.action, hideActions.contains(NSStringFromSelector(action)) {
+                item.isHidden = true
+            } else if hideByTitle.contains(item.title) {
+                item.isHidden = true
+            }
+        }
+    }
+
+    private func cleanUpEditMenu(_ menu: NSMenu) {
+        let keepActions: Set<String> = [
+            "copy:", "selectAll:",
+            "startDictation:", "orderFrontCharacterPalette:",
+        ]
+        for item in menu.items {
+            if item.isSeparatorItem { continue }
+            if let action = item.action, keepActions.contains(NSStringFromSelector(action)) {
+                continue
+            }
+            item.isHidden = true
+        }
+    }
+
+    private func cleanUpSeparators(_ menu: NSMenu) {
+        var lastVisibleWasSeparator = true
+        for item in menu.items {
+            if item.isHidden { continue }
+            if item.isSeparatorItem {
+                if lastVisibleWasSeparator {
+                    item.isHidden = true
+                }
+                lastVisibleWasSeparator = true
+            } else {
+                lastVisibleWasSeparator = false
+            }
+        }
+        if let last = menu.items.last(where: { !$0.isHidden }), last.isSeparatorItem {
+            last.isHidden = true
+        }
+    }
 }
 
 struct CoordinatorKey: FocusedValueKey {
@@ -96,12 +186,14 @@ struct JerboaApp: App {
     var body: some Scene {
         DocumentGroup(viewing: MarkdownDocument.self) { file in
             ContentView(document: file.$document, fileURL: file.fileURL)
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        self.appDelegate.setupMenuDelegates()
+                    }
+                }
         }
         .defaultSize(width: 900, height: 700)
         .commands {
-            CommandGroup(replacing: .saveItem) {}
-            CommandGroup(replacing: .pasteboard) {}
-            CommandGroup(replacing: .undoRedo) {}
             CommandGroup(after: .toolbar) {
                 Button("Reset Font Size") {
                     coordinator?.resetFontSize()
