@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="App/Assets.xcassets/AppIcon.appiconset/icon_512.png" width="512" height="512" alt="Jerboa app icon">
+  <img src=".github/logo.png" width="512" height="512" alt="Jerboa app icon">
 </p>
 
 <h1 align="center">Jerboa</h1>
