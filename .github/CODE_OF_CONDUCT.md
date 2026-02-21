@@ -20,7 +20,7 @@ We are committed to providing a welcoming and harassment-free experience for eve
 
 ## Enforcement
 
-Instances of unacceptable behavior may be reported to [ali@karbassi.com](mailto:ali@karbassi.com). All complaints will be reviewed and will result in a response deemed appropriate to the circumstances.
+Instances of unacceptable behavior may be reported to [github@karbassi.com](mailto:github@karbassi.com). All complaints will be reviewed and will result in a response deemed appropriate to the circumstances.
 
 ## Attribution
 

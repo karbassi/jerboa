@@ -4,7 +4,7 @@
 
 If you find a security vulnerability in Jerboa, please report it responsibly.
 
-**Do not open a public issue.** Instead, email [ali@karbassi.com](mailto:ali@karbassi.com) with:
+**Do not open a public issue.** Instead, email [github@karbassi.com](mailto:github@karbassi.com) with:
 
 - Description of the vulnerability
 - Steps to reproduce
