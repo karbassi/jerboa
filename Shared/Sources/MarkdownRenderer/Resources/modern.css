@@ -75,12 +75,15 @@ ul, ol { margin: 0 0 1rem 1.5rem; padding: 0; }
 li { margin-bottom: 0.35rem; }
 li > ul, li > ol { margin-top: 0.35rem; margin-bottom: 0; }
 
-/* Blockquotes */
-blockquote {
+/* Blockquotes & alerts (shared box shape) */
+blockquote,
+.markdown-alert {
   border-left: 4px solid var(--accent); margin: 1rem 0; padding: 0.75rem 1.25rem;
-  background: var(--bg-alt); border-radius: 0 8px 8px 0; color: var(--text-muted);
+  background: var(--bg-alt); border-radius: 0 8px 8px 0;
 }
-blockquote p:last-child { margin-bottom: 0; }
+blockquote > :last-child,
+.markdown-alert > :last-child { margin-bottom: 0; }
+blockquote { color: var(--text-muted); }
 
 /* Code */
 code {
@@ -132,13 +135,8 @@ main { max-width: 52rem; padding: 2.5rem 3rem 4rem; margin: 0 auto; width: 100%;
 /* GitHub-style alerts */
 .markdown-alert {
   --alert-color: var(--text-muted);
-  border-left: 4px solid var(--alert-color);
-  margin: 1rem 0;
-  padding: 0.75rem 1.25rem;
-  background: var(--bg-alt);
-  border-radius: 0 8px 8px 0;
+  border-left-color: var(--alert-color);
 }
-.markdown-alert > :last-child { margin-bottom: 0; }
 .markdown-alert .markdown-alert-title {
   display: flex;
   align-items: center;
