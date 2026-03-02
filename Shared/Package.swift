@@ -18,7 +18,6 @@ let package = Package(
                 .copy("Resources/markdown-it.min.js"),
                 .copy("Resources/markdown-it-footnote.min.js"),
                 .copy("Resources/markdown-it-task-lists.min.js"),
-                .copy("Resources/markdown-it-github-alerts.min.js"),
                 .copy("Resources/viewer.js")
             ]
         ),

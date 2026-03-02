@@ -19,8 +19,7 @@ struct MarkdownRendererTests {
     @Test func allResourceFilesExist() throws {
         let resources = ["viewer.html", "base.css", "modern.css",
                          "markdown-it.min.js", "markdown-it-footnote.min.js",
-                         "markdown-it-task-lists.min.js",
-                         "markdown-it-github-alerts.min.js", "viewer.js"]
+                         "markdown-it-task-lists.min.js", "viewer.js"]
         for resource in resources {
             let ext = (resource as NSString).pathExtension
             let name = (resource as NSString).deletingPathExtension
