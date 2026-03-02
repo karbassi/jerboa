@@ -1,42 +1,5 @@
 'use strict';
 
-// ── GitHub-style alerts plugin (inline, no dependencies) ──
-var _alertRe = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]([^\n\r]*)/i;
-
-function githubAlerts(md) {
-  md.core.ruler.after('block', 'github-alerts', function(state) {
-    var tokens = state.tokens;
-    for (var t = 0; t < tokens.length; t++) {
-      if (tokens[t].type !== 'blockquote_open') continue;
-      var open = tokens[t];
-      var start = t;
-      while (t < tokens.length && tokens[t].type !== 'blockquote_close') t++;
-      var close = tokens[t];
-      var inline;
-      for (var j = start; j <= t; j++) {
-        if (tokens[j].type === 'inline') { inline = tokens[j]; break; }
-      }
-      if (!inline) continue;
-      var m = inline.content.match(_alertRe);
-      if (!m) continue;
-      var type = m[1].toLowerCase();
-      var title = m[2].trim() || type.charAt(0).toUpperCase() + type.slice(1);
-      inline.content = inline.content.slice(m[0].length).trimStart();
-      open.type = 'alert_open';
-      open.tag = 'div';
-      open.meta = { title: title, type: type };
-      close.type = 'alert_close';
-      close.tag = 'div';
-    }
-  });
-
-  md.renderer.rules.alert_open = function(tokens, idx) {
-    var meta = tokens[idx].meta;
-    return '<div class="markdown-alert markdown-alert-' + meta.type + '">'
-      + '<p class="markdown-alert-title">' + meta.title + '</p>';
-  };
-}
-
 // ── Initialize markdown-it and pre-warm the JIT ──
 var md = window.markdownit({
   html: true,
@@ -45,7 +8,7 @@ var md = window.markdownit({
   linkify: true
 }).use(window.markdownitFootnote)
   .use(window.markdownitTaskLists)
-  .use(githubAlerts);
+  .use(window.markdownItGitHubAlerts);
 md.linkify.set({ fuzzyLink: false, fuzzyEmail: false, fuzzyIP: false });
 md.render('');
 

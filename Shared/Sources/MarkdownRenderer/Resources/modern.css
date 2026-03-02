@@ -146,7 +146,9 @@ main { max-width: 52rem; padding: 2.5rem 3rem 4rem; margin: 0 auto; width: 100%;
   margin-bottom: 0.25rem;
   color: var(--alert-color);
 }
-.markdown-alert .markdown-alert-title .octicon {
+.markdown-alert .octicon {
+  display: inline-block;
+  vertical-align: text-bottom;
   fill: currentColor;
   flex-shrink: 0;
 }
