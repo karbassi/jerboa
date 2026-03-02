@@ -13,6 +13,8 @@ final class WebViewCoordinator: NSObject, ObservableObject {
     @Published var activeHeadingID: String?
     @Published var fontSize: CGFloat = 13
 
+    var documentDirectoryURL: URL?
+
     private var webView: WKWebView?
     private var isPageLoaded = false
     private var lastRenderedText: String?
@@ -23,6 +25,7 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         let contentController = webView.configuration.userContentController
         contentController.add(self, name: "tocData")
         contentController.add(self, name: "scrollPosition")
+        contentController.add(self, name: "openLink")
 
         webView.navigationDelegate = self
     }
@@ -32,6 +35,7 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         let contentController = webView.configuration.userContentController
         contentController.removeScriptMessageHandler(forName: "tocData")
         contentController.removeScriptMessageHandler(forName: "scrollPosition")
+        contentController.removeScriptMessageHandler(forName: "openLink")
         webView.navigationDelegate = nil
         self.webView = nil
         self.isPageLoaded = false
@@ -69,6 +73,21 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         webView?.evaluateJavaScript("window.resetFontSize();")
     }
 
+    private func handleOpenLink(_ href: String) {
+        switch LinkResolver.resolve(href, relativeTo: documentDirectoryURL) {
+        case .openURL(let url):
+            NSWorkspace.shared.open(url)
+        case .openDocument(let url):
+            NSDocumentController.shared.openDocument(
+                withContentsOf: url, display: true
+            ) { _, _, _ in }
+        case .openFile(let url):
+            NSWorkspace.shared.open(url)
+        case .none:
+            break
+        }
+    }
+
 }
 
 extension WebViewCoordinator: WKScriptMessageHandler {
@@ -87,6 +106,10 @@ extension WebViewCoordinator: WKScriptMessageHandler {
             case "scrollPosition":
                 if let id = message.body as? String {
                     self.activeHeadingID = id.isEmpty ? nil : id
+                }
+            case "openLink":
+                if let href = message.body as? String {
+                    self.handleOpenLink(href)
                 }
             default:
                 break

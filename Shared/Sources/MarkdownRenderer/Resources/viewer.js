@@ -46,6 +46,7 @@ var md = window.markdownit({
 }).use(window.markdownitFootnote)
   .use(window.markdownitTaskLists)
   .use(githubAlerts);
+md.linkify.set({ fuzzyLink: false, fuzzyEmail: false, fuzzyIP: false });
 md.render('');
 
 // ── DOM refs ──
@@ -295,6 +296,26 @@ window.scrollToHeading = function(id) {
   var motion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
   el.scrollIntoView({ behavior: motion, block: 'start' });
 };
+
+// ── Intercept link clicks for native app ──
+if (isNativeApp) {
+  document.addEventListener('click', function(e) {
+    var anchor = e.target.closest('a');
+    if (!anchor) return;
+
+    var href = anchor.getAttribute('href');
+    if (!href) return;
+
+    // In-page anchors: let the browser handle them
+    if (href.charAt(0) === '#') return;
+
+    // All other links: send to Swift via message handler
+    e.preventDefault();
+    if (window.webkit.messageHandlers.openLink) {
+      window.webkit.messageHandlers.openLink.postMessage(href);
+    }
+  });
+}
 
 // ── Font size controls (called from native app) ──
 var baseFontSize = 13;
