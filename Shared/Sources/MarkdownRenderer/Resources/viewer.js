@@ -8,6 +8,7 @@ var md = window.markdownit({
   linkify: true
 }).use(window.markdownitFootnote)
   .use(window.markdownitTaskLists);
+md.linkify.set({ fuzzyLink: false, fuzzyEmail: false, fuzzyIP: false });
 md.render('');
 
 // ── DOM refs ──
