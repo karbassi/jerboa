@@ -129,6 +129,35 @@ main { max-width: 52rem; padding: 2.5rem 3rem 4rem; margin: 0 auto; width: 100%;
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
+/* GitHub-style alerts */
+.markdown-alert {
+  --alert-color: var(--text-muted);
+  border-left: 4px solid var(--alert-color);
+  margin: 1rem 0;
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-alt);
+  border-radius: 0 8px 8px 0;
+}
+.markdown-alert > :last-child { margin-bottom: 0; }
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+  color: var(--alert-color);
+}
+.markdown-alert .markdown-alert-title .octicon {
+  fill: currentColor;
+  flex-shrink: 0;
+}
+.markdown-alert-note  { --alert-color: #0969da; }
+.markdown-alert-tip   { --alert-color: #1a7f37; }
+.markdown-alert-important { --alert-color: #8250df; }
+.markdown-alert-warning   { --alert-color: #9a6700; }
+.markdown-alert-caution   { --alert-color: #d1242f; }
+
 /* Dark mode */
 @media (prefers-color-scheme: dark) {
   body {
@@ -138,6 +167,11 @@ main { max-width: 52rem; padding: 2.5rem 3rem 4rem; margin: 0 auto; width: 100%;
     --code-bg: #25262b; --badge-bg: #e03131; --badge-text: #fff;
     --tooltip-bg: #f8f9fa; --tooltip-text: #212529;
   }
+  .markdown-alert-note  { --alert-color: #2f81f7; }
+  .markdown-alert-tip   { --alert-color: #3fb950; }
+  .markdown-alert-important { --alert-color: #a371f7; }
+  .markdown-alert-warning   { --alert-color: #d29922; }
+  .markdown-alert-caution   { --alert-color: #f85149; }
 }
 
 @media (max-width: 900px) {
