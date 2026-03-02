@@ -31,6 +31,7 @@ struct ContentView: View {
         .focusedSceneValue(\.coordinator, coordinator)
         .onAppear {
             columnVisibility = sidebarVisible ? .all : .detailOnly
+            coordinator.documentDirectoryURL = fileURL?.deletingLastPathComponent()
             setupFileWatcher()
             if let fileURL {
                 SpotlightIndexer.index(fileURL: fileURL, text: document.text)

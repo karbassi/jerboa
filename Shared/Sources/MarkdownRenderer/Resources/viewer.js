@@ -258,6 +258,26 @@ window.scrollToHeading = function(id) {
   el.scrollIntoView({ behavior: motion, block: 'start' });
 };
 
+// ── Intercept link clicks for native app ──
+if (isNativeApp) {
+  document.addEventListener('click', function(e) {
+    var anchor = e.target.closest('a');
+    if (!anchor) return;
+
+    var href = anchor.getAttribute('href');
+    if (!href) return;
+
+    // In-page anchors: let the browser handle them
+    if (href.charAt(0) === '#') return;
+
+    // All other links: send to Swift via message handler
+    e.preventDefault();
+    if (window.webkit.messageHandlers.openLink) {
+      window.webkit.messageHandlers.openLink.postMessage(href);
+    }
+  });
+}
+
 // ── Font size controls (called from native app) ──
 var baseFontSize = 13;
 var currentFontSize = baseFontSize;
