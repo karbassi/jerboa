@@ -44,7 +44,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>$(GIT_SHA)</string>
+	<string>1</string>
 	<key>UTImportedTypeDeclarations</key>
 	<array>
 		<dict>

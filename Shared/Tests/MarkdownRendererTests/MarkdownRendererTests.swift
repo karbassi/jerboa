@@ -8,6 +8,7 @@ struct MarkdownRendererTests {
         let html = try MarkdownRenderer.viewerHTML()
         #expect(html.contains("<!DOCTYPE html>"))
         #expect(html.contains("markdown-it.min.js"))
+        #expect(html.contains("markdown-it-github-alerts.min.js"))
         #expect(html.contains("viewer.js"))
     }
 

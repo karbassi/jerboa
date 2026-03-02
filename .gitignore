@@ -7,4 +7,3 @@ DerivedData/
 *.swp
 .DS_Store
 .temp/
-BuildConfig/GitInfo.xcconfig
