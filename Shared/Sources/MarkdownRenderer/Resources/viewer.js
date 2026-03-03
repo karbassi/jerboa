@@ -7,7 +7,8 @@ var md = window.markdownit({
   breaks: true,
   linkify: true
 }).use(window.markdownitFootnote)
-  .use(window.markdownitTaskLists);
+  .use(window.markdownitTaskLists)
+  .use(window.markdownItGitHubAlerts);
 md.linkify.set({ fuzzyLink: false, fuzzyEmail: false, fuzzyIP: false });
 md.render('');
 
