@@ -196,7 +196,9 @@ struct JerboaApp: App {
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button("About Jerboa") {
-                    let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+                    let version = (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
+                        ?? (Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String)
+                        ?? "unknown"
                     let sha = Bundle.main.object(forInfoDictionaryKey: "GitCommitSHA") as? String ?? "unknown"
                     NSApplication.shared.orderFrontStandardAboutPanel(options: [
                         .applicationVersion: "\(version) (\(sha))",

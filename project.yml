@@ -23,7 +23,9 @@ targets:
           SHA=$(git -C "${PROJECT_DIR}" rev-parse --short HEAD 2>/dev/null || echo "unknown")
           NEW="GIT_SHA = ${SHA}"
           [ -f "${OUT}" ] && [ "$(cat "${OUT}")" = "${NEW}" ] && exit 0
-          echo "${NEW}" > "${OUT}"
+          TMP="${OUT}.$$"
+          echo "${NEW}" > "${TMP}"
+          mv -f "${TMP}" "${OUT}"
         basedOnDependencyAnalysis: false
     configFiles:
       Debug: BuildConfig/GitInfo.xcconfig
@@ -82,7 +84,9 @@ targets:
           SHA=$(git -C "${PROJECT_DIR}" rev-parse --short HEAD 2>/dev/null || echo "unknown")
           NEW="GIT_SHA = ${SHA}"
           [ -f "${OUT}" ] && [ "$(cat "${OUT}")" = "${NEW}" ] && exit 0
-          echo "${NEW}" > "${OUT}"
+          TMP="${OUT}.$$"
+          echo "${NEW}" > "${TMP}"
+          mv -f "${TMP}" "${OUT}"
         basedOnDependencyAnalysis: false
     configFiles:
       Debug: BuildConfig/GitInfo.xcconfig
