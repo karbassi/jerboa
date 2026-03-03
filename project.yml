@@ -16,6 +16,20 @@ targets:
     platform: macOS
     sources:
       - App
+    preBuildScripts:
+      - name: Stamp Git SHA
+        script: |
+          OUT="${PROJECT_DIR}/BuildConfig/GitInfo.local.xcconfig"
+          SHA=$(git -C "${PROJECT_DIR}" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+          NEW="GIT_SHA = ${SHA}"
+          [ -f "${OUT}" ] && [ "$(cat "${OUT}")" = "${NEW}" ] && exit 0
+          TMP="${OUT}.$$"
+          echo "${NEW}" > "${TMP}"
+          mv -f "${TMP}" "${OUT}"
+        basedOnDependencyAnalysis: false
+    configFiles:
+      Debug: BuildConfig/GitInfo.xcconfig
+      Release: BuildConfig/GitInfo.xcconfig
     dependencies:
       - package: MarkdownRenderer
       - target: JerboaQuickLook
@@ -35,6 +49,7 @@ targets:
     info:
       path: App/Info.plist
       properties:
+        GitCommitSHA: $(GIT_SHA)
         CFBundleURLTypes:
           - CFBundleURLName: Jerboa
             CFBundleURLSchemes:
@@ -62,6 +77,20 @@ targets:
     platform: macOS
     sources:
       - QuickLook
+    preBuildScripts:
+      - name: Stamp Git SHA
+        script: |
+          OUT="${PROJECT_DIR}/BuildConfig/GitInfo.local.xcconfig"
+          SHA=$(git -C "${PROJECT_DIR}" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+          NEW="GIT_SHA = ${SHA}"
+          [ -f "${OUT}" ] && [ "$(cat "${OUT}")" = "${NEW}" ] && exit 0
+          TMP="${OUT}.$$"
+          echo "${NEW}" > "${TMP}"
+          mv -f "${TMP}" "${OUT}"
+        basedOnDependencyAnalysis: false
+    configFiles:
+      Debug: BuildConfig/GitInfo.xcconfig
+      Release: BuildConfig/GitInfo.xcconfig
     dependencies:
       - package: MarkdownRenderer
     settings:
@@ -73,6 +102,7 @@ targets:
     info:
       path: QuickLook/Info.plist
       properties:
+        GitCommitSHA: $(GIT_SHA)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.quicklook.preview
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PreviewViewController

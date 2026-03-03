@@ -1,0 +1,2 @@
+GIT_SHA = unknown
+#include? "GitInfo.local.xcconfig"
