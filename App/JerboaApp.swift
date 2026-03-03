@@ -194,6 +194,15 @@ struct JerboaApp: App {
         }
         .defaultSize(width: 900, height: 700)
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About Jerboa") {
+                    let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+                    let sha = Bundle.main.object(forInfoDictionaryKey: "GitCommitSHA") as? String ?? "unknown"
+                    NSApplication.shared.orderFrontStandardAboutPanel(options: [
+                        .applicationVersion: "\(version) (\(sha))",
+                    ])
+                }
+            }
             CommandGroup(after: .toolbar) {
                 Button("Reset Font Size") {
                     coordinator?.resetFontSize()

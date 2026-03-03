@@ -19,9 +19,11 @@ targets:
     preBuildScripts:
       - name: Stamp Git SHA
         script: |
-          mkdir -p "${PROJECT_DIR}/BuildConfig"
+          OUT="${PROJECT_DIR}/BuildConfig/GitInfo.local.xcconfig"
           SHA=$(git -C "${PROJECT_DIR}" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-          echo "GIT_SHA = ${SHA}" > "${PROJECT_DIR}/BuildConfig/GitInfo.xcconfig"
+          NEW="GIT_SHA = ${SHA}"
+          [ -f "${OUT}" ] && [ "$(cat "${OUT}")" = "${NEW}" ] && exit 0
+          echo "${NEW}" > "${OUT}"
         basedOnDependencyAnalysis: false
     configFiles:
       Debug: BuildConfig/GitInfo.xcconfig
@@ -45,7 +47,7 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        CFBundleVersion: $(GIT_SHA)
+        GitCommitSHA: $(GIT_SHA)
         CFBundleURLTypes:
           - CFBundleURLName: Jerboa
             CFBundleURLSchemes:
@@ -76,9 +78,11 @@ targets:
     preBuildScripts:
       - name: Stamp Git SHA
         script: |
-          mkdir -p "${PROJECT_DIR}/BuildConfig"
+          OUT="${PROJECT_DIR}/BuildConfig/GitInfo.local.xcconfig"
           SHA=$(git -C "${PROJECT_DIR}" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-          echo "GIT_SHA = ${SHA}" > "${PROJECT_DIR}/BuildConfig/GitInfo.xcconfig"
+          NEW="GIT_SHA = ${SHA}"
+          [ -f "${OUT}" ] && [ "$(cat "${OUT}")" = "${NEW}" ] && exit 0
+          echo "${NEW}" > "${OUT}"
         basedOnDependencyAnalysis: false
     configFiles:
       Debug: BuildConfig/GitInfo.xcconfig
@@ -94,7 +98,7 @@ targets:
     info:
       path: QuickLook/Info.plist
       properties:
-        CFBundleVersion: $(GIT_SHA)
+        GitCommitSHA: $(GIT_SHA)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.quicklook.preview
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PreviewViewController

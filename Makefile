@@ -11,7 +11,10 @@ all: generate build
 # Generate .xcodeproj from project.yml
 generate:
 	@mkdir -p BuildConfig
-	@echo "GIT_SHA = $$(git rev-parse --short HEAD 2>/dev/null || echo unknown)" > BuildConfig/GitInfo.xcconfig
+	@NEW="GIT_SHA = $$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"; \
+	OUT=BuildConfig/GitInfo.local.xcconfig; \
+	if [ -f "$$OUT" ] && [ "$$(cat "$$OUT")" = "$$NEW" ]; then :; \
+	else echo "$$NEW" > "$$OUT"; fi
 	xcodegen generate
 
 # Build the app
