@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0] - 2026-03-05
+
+### Features
+
+- **GitHub-style alerts** — render NOTE, TIP, IMPORTANT, WARNING, and CAUTION blockquotes with styled callout boxes
+- **Smart link handling** — file links open in a new Jerboa window, HTTP(S) links open in the default browser
+- **Linkify protocol enforcement** — auto-linking now requires explicit `http://` or `https://` to avoid false positives
+- **Build version in About panel** — git SHA stamped into the About window for easy version identification
+- **Credits panel** — About window now shows acknowledgments for open-source dependencies
+
+### Improved
+
+- **Menu cleanup** — removed Save, Duplicate, Rename, Move, Revert, and Share menus that don't apply to a read-only viewer
+- **Security policy** — switched to GitHub private vulnerability reporting
+
 ## [1.0.0] - 2026-02-20
 
 First release.
