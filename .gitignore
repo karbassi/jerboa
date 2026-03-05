@@ -8,3 +8,4 @@ DerivedData/
 .DS_Store
 .temp/
 BuildConfig/GitInfo.local.xcconfig
+.claude/
