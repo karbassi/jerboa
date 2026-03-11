@@ -36,9 +36,12 @@ body {
 .contains-task-list { list-style: none; padding-left: 0; }
 .task-list-item { position: relative; padding-left: 1.6em; }
 .task-list-item-checkbox {
+  -webkit-appearance: checkbox;
   position: absolute;
   left: 0;
   top: 0.25em;
+  width: 1em;
+  height: 1em;
   margin: 0;
   pointer-events: none;
 }
