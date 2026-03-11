@@ -9,4 +9,5 @@ DerivedData/
 .temp/
 BuildConfig/GitInfo.local.xcconfig
 .claude/
+.worktrees/
 .env
