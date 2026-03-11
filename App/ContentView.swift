@@ -5,6 +5,7 @@ struct ContentView: View {
     let fileURL: URL?
     @StateObject private var coordinator = WebViewCoordinator()
     @State private var fileWatcher: FileWatcher?
+    @State private var displayText: String = ""
     @AppStorage("sidebarVisible") private var sidebarVisible = true
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
@@ -22,7 +23,7 @@ struct ContentView: View {
             .accessibilityIdentifier("toc-sidebar")
         } detail: {
             MarkdownWebView(
-                markdownText: document.text,
+                markdownText: displayText,
                 coordinator: coordinator
             )
             .accessibilityIdentifier("markdown-webview")
@@ -30,6 +31,7 @@ struct ContentView: View {
         .frame(minWidth: 700, minHeight: 500)
         .focusedSceneValue(\.coordinator, coordinator)
         .onAppear {
+            displayText = document.text
             columnVisibility = sidebarVisible ? .all : .detailOnly
             coordinator.documentDirectoryURL = fileURL?.deletingLastPathComponent()
             setupFileWatcher()
@@ -71,7 +73,7 @@ extension ContentView {
                 let text = String(data: data, encoding: .utf8)
                        ?? String(data: data, encoding: .isoLatin1)
                 guard let text else { return }
-                await MainActor.run { document.text = text }
+                await MainActor.run { displayText = text }
             }
         }
         fileWatcher = watcher
