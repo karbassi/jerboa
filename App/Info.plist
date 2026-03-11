@@ -45,6 +45,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>GitCommitSHA</key>
+	<string>$(GIT_SHA)</string>
 	<key>UTImportedTypeDeclarations</key>
 	<array>
 		<dict>
