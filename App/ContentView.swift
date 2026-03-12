@@ -5,9 +5,15 @@ struct ContentView: View {
     let fileURL: URL?
     @StateObject private var coordinator = WebViewCoordinator()
     @State private var fileWatcher: FileWatcher?
-    @State private var displayText: String = ""
+    @State private var displayText: String
     @AppStorage("sidebarVisible") private var sidebarVisible = true
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
+
+    init(document: Binding<MarkdownDocument>, fileURL: URL?) {
+        _document = document
+        self.fileURL = fileURL
+        _displayText = State(initialValue: document.wrappedValue.text)
+    }
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -31,7 +37,6 @@ struct ContentView: View {
         .frame(minWidth: 700, minHeight: 500)
         .focusedSceneValue(\.coordinator, coordinator)
         .onAppear {
-            displayText = document.text
             columnVisibility = sidebarVisible ? .all : .detailOnly
             coordinator.documentDirectoryURL = fileURL?.deletingLastPathComponent()
             setupFileWatcher()
