@@ -83,7 +83,7 @@ blockquote,
 }
 blockquote > :last-child,
 .markdown-alert > :last-child { margin-bottom: 0; }
-blockquote { color: var(--text-muted); }
+blockquote { color: var(--text); }
 
 /* Code */
 code {
