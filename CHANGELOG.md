@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0] - 2026-03-18
+
+### Fixed
+
+- **Blockquote readability** — blockquote text now uses the primary text color instead of muted, ensuring legible contrast in both light and dark mode
+- **Checkbox rendering** — fixed task list checkboxes not rendering correctly in WKWebView
+- **Read-only enforcement** — decoupled display text from document binding to prevent any autosave or dirty-state side effects
+
 ## [1.1.0] - 2026-03-05
 
 ### Features
