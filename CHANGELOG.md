@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] - 2026-03-18
+
+### Features
+
+- **Collapsible headers** — click any h2/h3/h4 heading to collapse or expand its section content, with a subtle chevron indicator in the left margin
+
 ## [1.2.0] - 2026-03-18
 
 ### Fixed

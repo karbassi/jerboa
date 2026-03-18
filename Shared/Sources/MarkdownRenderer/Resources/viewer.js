@@ -121,6 +121,40 @@ function assignHeadingIds(container) {
   });
 }
 
+// ── Collapsible headers ──
+function makeHeadersCollapsible(container) {
+  var headings = container.querySelectorAll('h2, h3, h4');
+  for (var i = 0; i < headings.length; i++) {
+    var h = headings[i];
+    var level = parseInt(h.tagName.charAt(1), 10);
+
+    // Collect sibling content until next same-or-higher level heading
+    var wrapper = document.createElement('div');
+    wrapper.className = 'collapsible-content';
+    var next = h.nextElementSibling;
+    while (next) {
+      if (/^H[1-6]$/.test(next.tagName) && parseInt(next.tagName.charAt(1), 10) <= level) break;
+      var sibling = next;
+      next = next.nextElementSibling;
+      wrapper.appendChild(sibling);
+    }
+    if (wrapper.childNodes.length === 0) continue;
+    h.after(wrapper);
+
+    h.classList.add('collapsible');
+
+    // Click handler
+    h.addEventListener('click', (function(heading, content) {
+      return function(e) {
+        // Don't toggle if user is selecting text or clicking a link
+        if (e.target.closest('a')) return;
+        heading.classList.toggle('collapsed');
+        content.classList.toggle('collapsed');
+      };
+    })(h, wrapper));
+  }
+}
+
 // ── Post-process footnotes ──
 var _backrefRe = /<a[^>]*class="footnote-backref"[^>]*>[\s\S]*?<\/a>/g;
 
@@ -224,6 +258,7 @@ window.renderMarkdown = function(text) {
   content.innerHTML = md.render(parsed.body);
   processFootnotes(content);
   assignHeadingIds(content);
+  makeHeadersCollapsible(content);
 
   viewer.classList.add('active');
 
@@ -256,6 +291,29 @@ window.renderMarkdown = function(text) {
 window.scrollToHeading = function(id) {
   var el = document.getElementById(id);
   if (!el) return;
+
+  // Expand the target heading if collapsed
+  if (el.classList.contains('collapsed')) {
+    el.classList.remove('collapsed');
+    var next = el.nextElementSibling;
+    if (next && next.classList.contains('collapsible-content')) {
+      next.classList.remove('collapsed');
+    }
+  }
+
+  // Expand any ancestor collapsed sections that contain this heading
+  var parent = el.parentElement;
+  while (parent && parent.id !== 'content') {
+    if (parent.classList.contains('collapsible-content') && parent.classList.contains('collapsed')) {
+      parent.classList.remove('collapsed');
+      var prev = parent.previousElementSibling;
+      if (prev && prev.classList.contains('collapsed')) {
+        prev.classList.remove('collapsed');
+      }
+    }
+    parent = parent.parentElement;
+  }
+
   var motion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
   el.scrollIntoView({ behavior: motion, block: 'start' });
 };

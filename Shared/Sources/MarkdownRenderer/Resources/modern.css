@@ -126,6 +126,32 @@ main { max-width: 52rem; padding: 2.5rem 3rem 4rem; margin: 0 auto; width: 100%;
   border: 6px solid transparent; border-top-color: var(--tooltip-bg);
 }
 
+/* Collapsible headers */
+h2.collapsible, h3.collapsible, h4.collapsible {
+  cursor: pointer;
+  user-select: text;
+}
+h2.collapsible:hover, h3.collapsible:hover, h4.collapsible:hover {
+  color: var(--accent);
+}
+h2.collapsible::before, h3.collapsible::before, h4.collapsible::before {
+  content: "\25BE";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.15em;
+  margin-left: -1.15em;
+  text-align: center;
+  font-size: 0.7em;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+h2.collapsible.collapsed::before, h3.collapsible.collapsed::before, h4.collapsible.collapsed::before {
+  content: "\25B8";
+}
+.collapsible-content.collapsed {
+  display: none;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
