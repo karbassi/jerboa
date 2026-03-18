@@ -5,8 +5,15 @@ struct ContentView: View {
     let fileURL: URL?
     @StateObject private var coordinator = WebViewCoordinator()
     @State private var fileWatcher: FileWatcher?
+    @State private var displayText: String
     @AppStorage("sidebarVisible") private var sidebarVisible = true
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
+
+    init(document: Binding<MarkdownDocument>, fileURL: URL?) {
+        _document = document
+        self.fileURL = fileURL
+        _displayText = State(initialValue: document.wrappedValue.text)
+    }
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -22,7 +29,7 @@ struct ContentView: View {
             .accessibilityIdentifier("toc-sidebar")
         } detail: {
             MarkdownWebView(
-                markdownText: document.text,
+                markdownText: displayText,
                 coordinator: coordinator
             )
             .accessibilityIdentifier("markdown-webview")
@@ -71,7 +78,7 @@ extension ContentView {
                 let text = String(data: data, encoding: .utf8)
                        ?? String(data: data, encoding: .isoLatin1)
                 guard let text else { return }
-                await MainActor.run { document.text = text }
+                await MainActor.run { displayText = text }
             }
         }
         fileWatcher = watcher
