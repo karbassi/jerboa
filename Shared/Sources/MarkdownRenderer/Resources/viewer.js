@@ -110,7 +110,7 @@ function buildMetaHeader(meta) {
 // ── Assign heading IDs (deduplicated) ──
 function assignHeadingIds(container) {
   var seen = {};
-  container.querySelectorAll('h2, h3, h4').forEach(function(h) {
+  container.querySelectorAll('h2, h3, h4, h5, h6').forEach(function(h) {
     var base = headingId(h.textContent) || 'heading';
     var id = base;
     if (seen[base]) {
@@ -123,7 +123,7 @@ function assignHeadingIds(container) {
 
 // ── Collapsible headers ──
 function makeHeadersCollapsible(container) {
-  var headings = container.querySelectorAll('h2, h3, h4');
+  var headings = container.querySelectorAll('h2, h3, h4, h5, h6');
   for (var i = 0; i < headings.length; i++) {
     var h = headings[i];
     var level = parseInt(h.tagName.charAt(1), 10);
