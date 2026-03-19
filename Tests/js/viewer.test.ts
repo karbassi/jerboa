@@ -449,14 +449,14 @@ describe('collapsible headers', () => {
       expect(wrapper!.querySelector('h3')).not.toBeNull();
     });
 
-    it('click on link inside heading does not toggle collapse', () => {
+    it('click on link inside heading still toggles collapse', () => {
       render('## [Link Title](https://example.com)\nContent.');
       const link = q('h2 a') as HTMLAnchorElement;
       expect(link).not.toBeNull();
       link.click();
 
-      // Heading should NOT be collapsed since we clicked a link
-      expect(q('h2')!.classList.contains('collapsed')).toBe(false);
+      // Heading should collapse — link navigation is prevented on collapsible headings
+      expect(q('h2')!.classList.contains('collapsed')).toBe(true);
     });
 
     it('wrapper captures mixed content types', () => {

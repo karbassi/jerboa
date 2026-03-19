@@ -153,7 +153,7 @@ function makeHeadersCollapsible(container) {
     // Toggle handler
     function makeToggle(heading, content, dots) {
       return function(e) {
-        if (e.target.closest('a')) return;
+        e.preventDefault();
         var collapsed = !heading.classList.contains('collapsed');
         heading.classList.toggle('collapsed', collapsed);
         content.classList.toggle('collapsed', collapsed);
@@ -162,8 +162,8 @@ function makeHeadersCollapsible(container) {
     }
     var toggle = makeToggle(h, wrapper, ellipsis);
     h.addEventListener('click', toggle);
-    ellipsis.addEventListener('click', function() {
-      if (h.classList.contains('collapsed')) toggle({ target: ellipsis });
+    ellipsis.addEventListener('click', function(e) {
+      if (h.classList.contains('collapsed')) toggle(e);
     });
   }
 }
