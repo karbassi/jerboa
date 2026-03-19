@@ -150,8 +150,8 @@ function makeHeadersCollapsible(container) {
     ellipsis.style.display = 'none';
     wrapper.before(ellipsis);
 
-    // Click handler
-    h.addEventListener('click', (function(heading, content, dots) {
+    // Toggle handler
+    function makeToggle(heading, content, dots) {
       return function(e) {
         if (e.target.closest('a')) return;
         var collapsed = !heading.classList.contains('collapsed');
@@ -159,7 +159,12 @@ function makeHeadersCollapsible(container) {
         content.classList.toggle('collapsed', collapsed);
         dots.style.display = collapsed ? '' : 'none';
       };
-    })(h, wrapper, ellipsis));
+    }
+    var toggle = makeToggle(h, wrapper, ellipsis);
+    h.addEventListener('click', toggle);
+    ellipsis.addEventListener('click', function() {
+      if (h.classList.contains('collapsed')) toggle({ target: ellipsis });
+    });
   }
 }
 
