@@ -11,3 +11,6 @@ BuildConfig/GitInfo.local.xcconfig
 .claude/
 .worktrees/
 .env
+node_modules/
+Tests/js/__screenshots__/
+Tests/js/package-lock.json

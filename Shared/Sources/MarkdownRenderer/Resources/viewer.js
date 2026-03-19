@@ -143,15 +143,23 @@ function makeHeadersCollapsible(container) {
 
     h.classList.add('collapsible');
 
+    // Ellipsis indicator (hidden by default, shown when collapsed)
+    var ellipsis = document.createElement('div');
+    ellipsis.className = 'collapse-ellipsis';
+    ellipsis.textContent = '\u2026';
+    ellipsis.style.display = 'none';
+    wrapper.before(ellipsis);
+
     // Click handler
-    h.addEventListener('click', (function(heading, content) {
+    h.addEventListener('click', (function(heading, content, dots) {
       return function(e) {
-        // Don't toggle if user is selecting text or clicking a link
         if (e.target.closest('a')) return;
-        heading.classList.toggle('collapsed');
-        content.classList.toggle('collapsed');
+        var collapsed = !heading.classList.contains('collapsed');
+        heading.classList.toggle('collapsed', collapsed);
+        content.classList.toggle('collapsed', collapsed);
+        dots.style.display = collapsed ? '' : 'none';
       };
-    })(h, wrapper));
+    })(h, wrapper, ellipsis));
   }
 }
 
@@ -287,19 +295,28 @@ window.renderMarkdown = function(text) {
   }
 };
 
+// ── Expand a collapsed heading ──
+function expandHeading(heading) {
+  if (!heading.classList.contains('collapsed')) return;
+  heading.classList.remove('collapsed');
+  // Hide ellipsis (sits between heading and content wrapper)
+  var sib = heading.nextElementSibling;
+  if (sib && sib.classList.contains('collapse-ellipsis')) {
+    sib.style.display = 'none';
+    sib = sib.nextElementSibling;
+  }
+  if (sib && sib.classList.contains('collapsible-content')) {
+    sib.classList.remove('collapsed');
+  }
+}
+
 // ── Scroll to heading (called from native app) ──
 window.scrollToHeading = function(id) {
   var el = document.getElementById(id);
   if (!el) return;
 
   // Expand the target heading if collapsed
-  if (el.classList.contains('collapsed')) {
-    el.classList.remove('collapsed');
-    var next = el.nextElementSibling;
-    if (next && next.classList.contains('collapsible-content')) {
-      next.classList.remove('collapsed');
-    }
-  }
+  expandHeading(el);
 
   // Expand any ancestor collapsed sections that contain this heading
   var parent = el.parentElement;
@@ -307,8 +324,12 @@ window.scrollToHeading = function(id) {
     if (parent.classList.contains('collapsible-content') && parent.classList.contains('collapsed')) {
       parent.classList.remove('collapsed');
       var prev = parent.previousElementSibling;
+      if (prev && prev.classList.contains('collapse-ellipsis')) {
+        prev.style.display = 'none';
+        prev = prev.previousElementSibling;
+      }
       if (prev && prev.classList.contains('collapsed')) {
-        prev.classList.remove('collapsed');
+        expandHeading(prev);
       }
     }
     parent = parent.parentElement;
