@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.4.0-beta.1] - 2026-03-19
+
+### Features
+
+- **Collapsible headers** — click any h2–h6 heading to collapse or expand its section content
+- **Ellipsis indicator** — faint `…` appears between collapsed header and next section; click or press Enter/Space to expand
+- **Clickable ellipsis** — the `…` indicator is interactive with full keyboard and accessibility support (`role=button`, `aria-label`, `tabindex`)
+
+### Fixed
+
+- **Link-only headings** — headings composed entirely of a link can now be collapsed
+- **h4–h6 heading IDs** — all subheadings now get IDs for `scrollToHeading` support, not just h2/h3
+- **Var closure bug** — ellipsis click handlers correctly reference their own heading in multi-section documents
+- **Text node click safety** — click targets are normalized to Elements before checking for links
+
 ## [1.3.0] - 2026-03-18
 
 ### Features
