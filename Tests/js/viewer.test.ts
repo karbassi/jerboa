@@ -724,6 +724,25 @@ describe('collapsible edge cases', () => {
     expect(ellipsis.style.display).toBe('none');
   });
 
+  it('clicking ellipsis expands only the correct section among multiple', () => {
+    render('## A\nContent A.\n## B\nContent B.\n## C\nContent C.');
+    const headings = qa('h2.collapsible');
+    const ellipses = document.getElementById('content')!.querySelectorAll('.collapse-ellipsis');
+
+    // Collapse all three
+    (headings[0] as HTMLElement).click();
+    (headings[1] as HTMLElement).click();
+    (headings[2] as HTMLElement).click();
+
+    // Click ellipsis for section B only
+    (ellipses[1] as HTMLElement).click();
+
+    // B should be expanded, A and C still collapsed
+    expect(headings[0].classList.contains('collapsed')).toBe(true);
+    expect(headings[1].classList.contains('collapsed')).toBe(false);
+    expect(headings[2].classList.contains('collapsed')).toBe(true);
+  });
+
   it('scrollToHeading expands both h3 and h2 when independently collapsed', () => {
     render('## Parent\nIntro.\n### Child\nChild content.');
     // Collapse h3 first, then collapse h2

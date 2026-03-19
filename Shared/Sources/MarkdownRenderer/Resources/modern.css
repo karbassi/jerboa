@@ -141,6 +141,7 @@ h2.collapsible, h3.collapsible, h4.collapsible, h5.collapsible, h6.collapsible {
   opacity: 0.5;
   margin: 0.25rem 0 0.5rem;
   user-select: none;
+  cursor: pointer;
 }
 
 /* Scrollbar */

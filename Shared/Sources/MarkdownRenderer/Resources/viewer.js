@@ -148,6 +148,9 @@ function makeHeadersCollapsible(container) {
     ellipsis.className = 'collapse-ellipsis';
     ellipsis.textContent = '\u2026';
     ellipsis.style.display = 'none';
+    ellipsis.setAttribute('role', 'button');
+    ellipsis.setAttribute('aria-label', 'Expand section');
+    ellipsis.tabIndex = 0;
     wrapper.before(ellipsis);
 
     // Toggle handler
@@ -161,9 +164,11 @@ function makeHeadersCollapsible(container) {
       };
     })(h, wrapper, ellipsis);
     h.addEventListener('click', toggle);
-    ellipsis.addEventListener('click', function(e) {
-      if (h.classList.contains('collapsed')) toggle(e);
-    });
+    (function(heading, fn) {
+      ellipsis.addEventListener('click', function(e) {
+        if (heading.classList.contains('collapsed')) fn(e);
+      });
+    })(h, toggle);
   }
 }
 
