@@ -151,16 +151,15 @@ function makeHeadersCollapsible(container) {
     wrapper.before(ellipsis);
 
     // Toggle handler
-    function makeToggle(heading, content, dots) {
+    var toggle = (function(heading, content, dots) {
       return function(e) {
-        e.preventDefault();
+        if (e.target.closest && e.target.closest('a')) e.preventDefault();
         var collapsed = !heading.classList.contains('collapsed');
         heading.classList.toggle('collapsed', collapsed);
         content.classList.toggle('collapsed', collapsed);
         dots.style.display = collapsed ? '' : 'none';
       };
-    }
-    var toggle = makeToggle(h, wrapper, ellipsis);
+    })(h, wrapper, ellipsis);
     h.addEventListener('click', toggle);
     ellipsis.addEventListener('click', function(e) {
       if (h.classList.contains('collapsed')) toggle(e);
@@ -203,6 +202,7 @@ var _scrollHandler = null;
 var _lastReportedId = null;
 
 function initNativeScrollTracking() {
+  // TOC sidebar only shows h2/h3 — h4-h6 have IDs for collapsible/scrollTo but are excluded from TOC
   var headings = document.querySelectorAll('h2[id], h3[id]');
 
   if (_scrollHandler) {
@@ -285,6 +285,7 @@ window.renderMarkdown = function(text) {
   // Defer non-critical work
   if (isNativeApp) {
     (window.requestIdleCallback || requestAnimationFrame)(function() {
+      // TOC sidebar only shows h2/h3 — h4-h6 excluded intentionally
       var headings = content.querySelectorAll('h2[id], h3[id]');
       var entries = [];
       headings.forEach(function(h) {
