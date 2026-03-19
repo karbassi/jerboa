@@ -156,7 +156,8 @@ function makeHeadersCollapsible(container) {
     // Toggle handler
     var toggle = (function(heading, content, dots) {
       return function(e) {
-        if (e.target.closest && e.target.closest('a')) e.preventDefault();
+        var el = e.target.nodeType === 1 ? e.target : e.target.parentElement;
+        if (el && el.closest('a')) e.preventDefault();
         var collapsed = !heading.classList.contains('collapsed');
         heading.classList.toggle('collapsed', collapsed);
         content.classList.toggle('collapsed', collapsed);
@@ -165,8 +166,15 @@ function makeHeadersCollapsible(container) {
     })(h, wrapper, ellipsis);
     h.addEventListener('click', toggle);
     (function(heading, fn) {
-      ellipsis.addEventListener('click', function(e) {
+      function onActivate(e) {
         if (heading.classList.contains('collapsed')) fn(e);
+      }
+      ellipsis.addEventListener('click', onActivate);
+      ellipsis.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onActivate(e);
+        }
       });
     })(h, toggle);
   }
