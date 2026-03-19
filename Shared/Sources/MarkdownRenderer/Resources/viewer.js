@@ -110,7 +110,7 @@ function buildMetaHeader(meta) {
 // ── Assign heading IDs (deduplicated) ──
 function assignHeadingIds(container) {
   var seen = {};
-  container.querySelectorAll('h2, h3').forEach(function(h) {
+  container.querySelectorAll('h2, h3, h4').forEach(function(h) {
     var base = headingId(h.textContent) || 'heading';
     var id = base;
     if (seen[base]) {
