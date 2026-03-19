@@ -110,7 +110,7 @@ function buildMetaHeader(meta) {
 // ── Assign heading IDs (deduplicated) ──
 function assignHeadingIds(container) {
   var seen = {};
-  container.querySelectorAll('h2, h3').forEach(function(h) {
+  container.querySelectorAll('h2, h3, h4, h5, h6').forEach(function(h) {
     var base = headingId(h.textContent) || 'heading';
     var id = base;
     if (seen[base]) {
@@ -123,7 +123,7 @@ function assignHeadingIds(container) {
 
 // ── Collapsible headers ──
 function makeHeadersCollapsible(container) {
-  var headings = container.querySelectorAll('h2, h3, h4');
+  var headings = container.querySelectorAll('h2, h3, h4, h5, h6');
   for (var i = 0; i < headings.length; i++) {
     var h = headings[i];
     var level = parseInt(h.tagName.charAt(1), 10);
@@ -143,15 +143,40 @@ function makeHeadersCollapsible(container) {
 
     h.classList.add('collapsible');
 
-    // Click handler
-    h.addEventListener('click', (function(heading, content) {
+    // Ellipsis indicator (hidden by default, shown when collapsed)
+    var ellipsis = document.createElement('div');
+    ellipsis.className = 'collapse-ellipsis';
+    ellipsis.textContent = '\u2026';
+    ellipsis.style.display = 'none';
+    ellipsis.setAttribute('role', 'button');
+    ellipsis.setAttribute('aria-label', 'Expand section');
+    ellipsis.tabIndex = 0;
+    wrapper.before(ellipsis);
+
+    // Toggle handler
+    var toggle = (function(heading, content, dots) {
       return function(e) {
-        // Don't toggle if user is selecting text or clicking a link
-        if (e.target.closest('a')) return;
-        heading.classList.toggle('collapsed');
-        content.classList.toggle('collapsed');
+        var el = e.target.nodeType === 1 ? e.target : e.target.parentElement;
+        if (el && el.closest('a')) e.preventDefault();
+        var collapsed = !heading.classList.contains('collapsed');
+        heading.classList.toggle('collapsed', collapsed);
+        content.classList.toggle('collapsed', collapsed);
+        dots.style.display = collapsed ? '' : 'none';
       };
-    })(h, wrapper));
+    })(h, wrapper, ellipsis);
+    h.addEventListener('click', toggle);
+    (function(heading, fn) {
+      function onActivate(e) {
+        if (heading.classList.contains('collapsed')) fn(e);
+      }
+      ellipsis.addEventListener('click', onActivate);
+      ellipsis.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onActivate(e);
+        }
+      });
+    })(h, toggle);
   }
 }
 
@@ -190,6 +215,7 @@ var _scrollHandler = null;
 var _lastReportedId = null;
 
 function initNativeScrollTracking() {
+  // TOC sidebar only shows h2/h3 — h4-h6 have IDs for collapsible/scrollTo but are excluded from TOC
   var headings = document.querySelectorAll('h2[id], h3[id]');
 
   if (_scrollHandler) {
@@ -272,6 +298,7 @@ window.renderMarkdown = function(text) {
   // Defer non-critical work
   if (isNativeApp) {
     (window.requestIdleCallback || requestAnimationFrame)(function() {
+      // TOC sidebar only shows h2/h3 — h4-h6 excluded intentionally
       var headings = content.querySelectorAll('h2[id], h3[id]');
       var entries = [];
       headings.forEach(function(h) {
@@ -287,19 +314,28 @@ window.renderMarkdown = function(text) {
   }
 };
 
+// ── Expand a collapsed heading ──
+function expandHeading(heading) {
+  if (!heading.classList.contains('collapsed')) return;
+  heading.classList.remove('collapsed');
+  // Hide ellipsis (sits between heading and content wrapper)
+  var sib = heading.nextElementSibling;
+  if (sib && sib.classList.contains('collapse-ellipsis')) {
+    sib.style.display = 'none';
+    sib = sib.nextElementSibling;
+  }
+  if (sib && sib.classList.contains('collapsible-content')) {
+    sib.classList.remove('collapsed');
+  }
+}
+
 // ── Scroll to heading (called from native app) ──
 window.scrollToHeading = function(id) {
   var el = document.getElementById(id);
   if (!el) return;
 
   // Expand the target heading if collapsed
-  if (el.classList.contains('collapsed')) {
-    el.classList.remove('collapsed');
-    var next = el.nextElementSibling;
-    if (next && next.classList.contains('collapsible-content')) {
-      next.classList.remove('collapsed');
-    }
-  }
+  expandHeading(el);
 
   // Expand any ancestor collapsed sections that contain this heading
   var parent = el.parentElement;
@@ -307,8 +343,12 @@ window.scrollToHeading = function(id) {
     if (parent.classList.contains('collapsible-content') && parent.classList.contains('collapsed')) {
       parent.classList.remove('collapsed');
       var prev = parent.previousElementSibling;
+      if (prev && prev.classList.contains('collapse-ellipsis')) {
+        prev.style.display = 'none';
+        prev = prev.previousElementSibling;
+      }
       if (prev && prev.classList.contains('collapsed')) {
-        prev.classList.remove('collapsed');
+        expandHeading(prev);
       }
     }
     parent = parent.parentElement;
