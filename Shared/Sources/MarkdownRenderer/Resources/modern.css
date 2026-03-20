@@ -25,59 +25,11 @@ body {
 	min-height: 100vh;
 }
 
-/* Title block */
-header#title-block-header {
-	margin-bottom: 2.5rem;
-	padding-bottom: 1.5rem;
-	border-bottom: 1px solid var(--border);
-}
-header#title-block-header .confidential {
-	display: inline-block;
-	padding: 0.2rem 0.7rem;
-	background: var(--badge-bg);
-	color: var(--badge-text);
-	font-size: 0.7rem;
-	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	border-radius: 4px;
-	margin-bottom: 0.75rem;
-}
-header#title-block-header h1.title {
-	font-size: 1.85rem;
-	font-weight: 800;
-	line-height: 1.25;
-	margin-bottom: 1rem;
-	color: var(--text);
-}
-header#title-block-header hr {
-	display: none;
-}
-
-/* Metadata table */
-table.metadata {
-	width: auto;
-	font-size: 0.85rem;
-	line-height: 1.6;
-	margin: 0;
-	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: 0.3rem 1.2rem;
-}
-table.metadata tbody,
-table.metadata tr {
-	display: contents;
-}
-table.metadata th,
-table.metadata td {
-	padding: 0;
-	border: none;
-}
-table.metadata th {
-	font-weight: 600;
-	color: var(--text-muted);
-	text-transform: capitalize;
-	white-space: nowrap;
+main {
+	max-width: 52rem;
+	padding: 2.5rem 3rem 4rem;
+	margin: 0 auto;
+	width: 100%;
 }
 
 /* Headings */
@@ -219,13 +171,6 @@ tr:hover td {
 	background: color-mix(in srgb, var(--accent) 4%, transparent);
 }
 
-main {
-	max-width: 52rem;
-	padding: 2.5rem 3rem 4rem;
-	margin: 0 auto;
-	width: 100%;
-}
-
 /* Footnotes */
 .fn-ref sup {
 	color: var(--accent);
@@ -250,6 +195,60 @@ main {
 	transform: translateX(-50%);
 	border: 6px solid transparent;
 	border-top-color: var(--tooltip-bg);
+}
+
+/* Title block (after generic hr/table rules to avoid specificity warnings) */
+header#title-block-header {
+	margin-bottom: 2.5rem;
+	padding-bottom: 1.5rem;
+	border-bottom: 1px solid var(--border);
+}
+header#title-block-header .confidential {
+	display: inline-block;
+	padding: 0.2rem 0.7rem;
+	background: var(--badge-bg);
+	color: var(--badge-text);
+	font-size: 0.7rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	border-radius: 4px;
+	margin-bottom: 0.75rem;
+}
+header#title-block-header h1.title {
+	font-size: 1.85rem;
+	font-weight: 800;
+	line-height: 1.25;
+	margin-bottom: 1rem;
+}
+header#title-block-header hr {
+	display: none;
+}
+
+/* Metadata table (after generic table rules) */
+table.metadata {
+	width: auto;
+	font-size: 0.85rem;
+	line-height: 1.6;
+	margin: 0;
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.3rem 1.2rem;
+}
+table.metadata tbody,
+table.metadata tr {
+	display: contents;
+}
+table.metadata th,
+table.metadata td {
+	padding: 0;
+	border: none;
+}
+table.metadata th {
+	font-weight: 600;
+	color: var(--text-muted);
+	text-transform: capitalize;
+	white-space: nowrap;
 }
 
 /* Collapsible headers */
