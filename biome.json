@@ -1,0 +1,29 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
+	"files": {
+		"includes": [
+			"Shared/Sources/MarkdownRenderer/Resources/*.css",
+			"Shared/Sources/MarkdownRenderer/Resources/viewer.js",
+			"Tests/js/**"
+		]
+	},
+	"linter": {
+		"rules": {
+			"style": {
+				"noNonNullAssertion": "off",
+				"useTemplate": "off",
+				"useConst": "off",
+				"useNodejsImportProtocol": "warn"
+			},
+			"correctness": {
+				"noInnerDeclarations": "off"
+			},
+			"suspicious": {
+				"noExplicitAny": "off"
+			},
+			"complexity": {
+				"noCommaOperator": "off"
+			}
+		}
+	}
+}

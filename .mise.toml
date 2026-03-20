@@ -91,8 +91,19 @@ description = "Run Swift package tests"
 run = "cd Shared && swift test"
 
 [tasks.lint]
-description = "Run SwiftLint"
-run = "swiftlint lint --config .swiftlint.yml App/ QuickLook/ Tests/"
+description = "Run SwiftLint and Biome"
+run = """
+swiftlint lint --config .swiftlint.yml App/ QuickLook/ Tests/
+biome check
+"""
+
+[tasks."lint:fix"]
+description = "Auto-fix lint issues with Biome"
+run = "biome check --write"
+
+[tasks."test-js"]
+description = "Run Vitest WebKit browser tests"
+run = "cd Tests/js && npx vitest run"
 
 [tasks.sign]
 description = "Ad-hoc sign the release build"
