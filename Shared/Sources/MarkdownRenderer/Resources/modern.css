@@ -71,7 +71,9 @@ a:hover { text-decoration-thickness: 2px; }
 strong { font-weight: 700; }
 
 /* Lists */
-ul, ol { margin: 0 0 1rem 1.5rem; padding: 0; }
+ul, ol { margin: 0 0 1rem 28px; padding: 0; }
+ol { list-style: decimal; }
+ol > li::marker { color: var(--text-muted); }
 li { margin-bottom: 0.35rem; }
 li > ul, li > ol { margin-top: 0.35rem; margin-bottom: 0; }
 
