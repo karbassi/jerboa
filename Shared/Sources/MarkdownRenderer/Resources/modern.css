@@ -61,6 +61,8 @@ h2 {
 }
 h3 { font-size: 1.15rem; font-weight: 600; margin: 2rem 0 0.75rem; color: var(--text); }
 h4 { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: var(--text); }
+h5 { font-size: 0.9rem; font-weight: 600; margin: 1.25rem 0 0.4rem; color: var(--text); }
+h6 { font-size: 0.85rem; font-weight: 600; margin: 1rem 0 0.3rem; color: var(--text-muted); }
 p { margin-bottom: 1rem; }
 
 /* Links */
@@ -71,7 +73,7 @@ a:hover { text-decoration-thickness: 2px; }
 strong { font-weight: 700; }
 
 /* Lists */
-ul, ol { margin: 0 0 1rem 28px; padding: 0; }
+ul, ol { margin: 0 0 1rem 1.75rem; padding: 0; }
 ol > li::marker { color: var(--text-muted); }
 li { margin-bottom: 0.35rem; }
 li > ul, li > ol { margin-top: 0.35rem; margin-bottom: 0; }
@@ -128,7 +130,7 @@ main { max-width: 52rem; padding: 2.5rem 3rem 4rem; margin: 0 auto; width: 100%;
 }
 
 /* Collapsible headers */
-h2.collapsible, h3.collapsible, h4.collapsible, h5.collapsible, h6.collapsible {
+:is(h2, h3, h4, h5, h6).collapsible {
   cursor: pointer;
   user-select: text;
 }
