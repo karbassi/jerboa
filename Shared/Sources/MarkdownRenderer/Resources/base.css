@@ -34,9 +34,9 @@ body {
 
 /* ── Task list checkboxes ─────────────────────────────────────────────── */
 .contains-task-list { list-style: none; }
-.contains-task-list > li:not(.task-list-item) { list-style: disc; color: var(--text); }
-li > p { margin-bottom: 0; }
-.task-list-item { list-style: none; padding-left: 30px; text-indent: -30px; margin-left: -28px; }
+.contains-task-list > li:not(.task-list-item) { list-style: disc; }
+.contains-task-list li > p { margin-bottom: 0; }
+.task-list-item { list-style: none; padding-left: 30px; text-indent: -30px; margin-left: -28px; /* 2px offset aligns text with bullet/number lists */ }
 .task-list-item-checkbox {
   -webkit-appearance: none;
   appearance: none;
@@ -49,10 +49,6 @@ li > p { margin-bottom: 0; }
   pointer-events: none;
   display: inline-block;
   position: relative;
-  background: transparent;
-}
-.task-list-item-checkbox:checked {
-  border-color: var(--text-muted, #868e96);
   background: transparent;
 }
 .task-list-item-checkbox:checked::after {
