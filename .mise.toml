@@ -15,7 +15,10 @@ ICON_DIR = "App/Assets.xcassets/AppIcon.appiconset"
 description = "Generate .xcodeproj from project.yml"
 run = """
 mkdir -p BuildConfig
-NEW="GIT_SHA = $(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+SHA=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
+VER=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo 0.0.0)
+NEW="GIT_SHA = $SHA
+GIT_VERSION = $VER"
 OUT=BuildConfig/GitInfo.local.xcconfig
 if [ -f "$OUT" ] && [ "$(cat "$OUT")" = "$NEW" ]; then :; else echo "$NEW" > "$OUT"; fi
 xcodegen generate

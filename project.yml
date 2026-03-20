@@ -21,7 +21,9 @@ targets:
         script: |
           OUT="${PROJECT_DIR}/BuildConfig/GitInfo.local.xcconfig"
           SHA=$(git -C "${PROJECT_DIR}" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-          NEW="GIT_SHA = ${SHA}"
+          VER=$(git -C "${PROJECT_DIR}" describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
+          NEW="GIT_SHA = ${SHA}
+          GIT_VERSION = ${VER}"
           [ -f "${OUT}" ] && [ "$(cat "${OUT}")" = "${NEW}" ] && exit 0
           TMP="${OUT}.$$"
           echo "${NEW}" > "${TMP}"
@@ -46,9 +48,11 @@ targets:
         SWIFT_VERSION: "6.0"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         PRODUCT_NAME: Jerboa
+        MARKETING_VERSION: $(GIT_VERSION)
     info:
       path: App/Info.plist
       properties:
+        CFBundleShortVersionString: $(GIT_VERSION)
         GitCommitSHA: $(GIT_SHA)
         CFBundleURLTypes:
           - CFBundleURLName: Jerboa
@@ -82,7 +86,9 @@ targets:
         script: |
           OUT="${PROJECT_DIR}/BuildConfig/GitInfo.local.xcconfig"
           SHA=$(git -C "${PROJECT_DIR}" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-          NEW="GIT_SHA = ${SHA}"
+          VER=$(git -C "${PROJECT_DIR}" describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
+          NEW="GIT_SHA = ${SHA}
+          GIT_VERSION = ${VER}"
           [ -f "${OUT}" ] && [ "$(cat "${OUT}")" = "${NEW}" ] && exit 0
           TMP="${OUT}.$$"
           echo "${NEW}" > "${TMP}"

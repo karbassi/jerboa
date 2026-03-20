@@ -1,2 +1,3 @@
 GIT_SHA = unknown
+GIT_VERSION = 0.0.0
 #include? "GitInfo.local.xcconfig"
