@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.4.0-beta.1] - 2026-03-19
+## [1.4.0-beta.2] - 2026-03-20
 
 ### Features
 
@@ -14,6 +14,15 @@
 - **h4–h6 heading IDs** — all subheadings now get IDs for `scrollToHeading` support, not just h2/h3
 - **Var closure bug** — ellipsis click handlers correctly reference their own heading in multi-section documents
 - **Text node click safety** — click targets are normalized to Elements before checking for links
+- **Checkbox styling** — custom styled checkboxes with proper alignment, checked items dimmed
+- **List alignment** — consistent text alignment across checkboxes, bullets, and numbered lists
+- **About panel version** — now derived from git tags at build time instead of hardcoded 1.0
+
+### Improved
+
+- **CSS cleanup** — formatted with Biome, removed redundant declarations, fixed specificity ordering
+- **Biome linting** — added Biome for CSS/JS/TS linting and formatting with mise tasks
+- **h5/h6 heading styles** — added base styles for h5 and h6 headings
 
 ## [1.3.0] - 2026-03-18
 
