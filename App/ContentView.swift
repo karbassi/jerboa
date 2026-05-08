@@ -45,10 +45,15 @@ struct ContentView: View {
                     ToolbarItem(placement: .primaryAction) {
                         PendingReloadIndicator(onReload: reloadFromDisk)
                     }
-                } else if syncState == .missing {
-                    ToolbarItem(placement: .primaryAction) {
-                        MissingIndicator()
-                    }
+                }
+            }
+            .overlay(alignment: .topTrailing) {
+                if syncState == .missing {
+                    Text("File missing")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding(.top, 8)
+                        .padding(.trailing, 12)
                 }
             }
         }
@@ -130,17 +135,3 @@ private struct PendingReloadIndicator: View {
     }
 }
 
-private struct MissingIndicator: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSTextField {
-        let label = NSTextField(labelWithString: "File missing")
-        label.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
-        label.textColor = .systemRed
-        label.toolTip = "The file is no longer at its original path. Re-open it to resume reading from disk."
-        label.isBordered = false
-        label.isBezeled = false
-        label.drawsBackground = false
-        return label
-    }
-
-    func updateNSView(_ nsView: NSTextField, context: Context) {}
-}
