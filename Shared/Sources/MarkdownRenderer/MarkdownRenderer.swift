@@ -19,6 +19,57 @@ public enum MarkdownRenderer {
         viewerHTMLURL()?.deletingLastPathComponent()
     }
 
+    /// Returns viewer.html with all stylesheet/script subresources inlined.
+    /// Used by WKWebView to avoid per-subresource NetworkProcess scheduling
+    /// stalls observed in macOS 26 sandbox profiles.
+    public static func viewerHTMLInlined() throws -> String {
+        let html = try viewerHTML()
+        var output = html
+        for match in linkOrScriptMatches(in: html).reversed() {
+            guard let resource = try? loadResource(named: match.href) else { continue }
+            let replacement = match.isScript
+                ? "<script>\n\(resource)\n</script>"
+                : "<style>\n\(resource)\n</style>"
+            output.replaceSubrange(match.range, with: replacement)
+        }
+        return output
+    }
+
+    private struct ResourceMatch {
+        let range: Range<String.Index>
+        let href: String
+        let isScript: Bool
+    }
+
+    private static func linkOrScriptMatches(in html: String) -> [ResourceMatch] {
+        var matches: [ResourceMatch] = []
+        let patterns: [(NSRegularExpression, Bool)] = [
+            (try! NSRegularExpression(pattern: #"<link\b[^>]*\bhref="([^"]+)"[^>]*>"#), false),
+            (try! NSRegularExpression(pattern: #"<script\b[^>]*\bsrc="([^"]+)"[^>]*>\s*</script>"#), true),
+        ]
+        let nsHTML = html as NSString
+        for (regex, isScript) in patterns {
+            let range = NSRange(location: 0, length: nsHTML.length)
+            regex.enumerateMatches(in: html, range: range) { result, _, _ in
+                guard let result, result.numberOfRanges == 2,
+                      let full = Range(result.range, in: html),
+                      let href = Range(result.range(at: 1), in: html) else { return }
+                matches.append(ResourceMatch(range: full, href: String(html[href]), isScript: isScript))
+            }
+        }
+        return matches.sorted { $0.range.lowerBound < $1.range.lowerBound }
+    }
+
+    private static func loadResource(named name: String) throws -> String {
+        let nsName = name as NSString
+        let stem = nsName.deletingPathExtension
+        let ext = nsName.pathExtension
+        guard let url = Bundle.module.url(forResource: stem, withExtension: ext) else {
+            throw RendererError.resourceNotFound(name)
+        }
+        return try String(contentsOf: url, encoding: .utf8)
+    }
+
     /// Escapes a string for safe use inside a JS template literal.
     public static func escapeForTemplateLiteral(_ string: String) -> String {
         var utf8 = Array(string.utf8)

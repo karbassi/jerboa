@@ -17,9 +17,8 @@ struct MarkdownWebView: NSViewRepresentable {
 
         coordinator.setup(webView: webView)
 
-        if let htmlURL = MarkdownRenderer.viewerHTMLURL(),
-           let resourceDir = MarkdownRenderer.resourceDirectoryURL() {
-            webView.loadFileURL(htmlURL, allowingReadAccessTo: resourceDir)
+        if let html = try? MarkdownRenderer.viewerHTMLInlined() {
+            webView.loadHTMLString(html, baseURL: nil)
         }
 
         return webView

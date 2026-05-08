@@ -149,9 +149,8 @@ extension WebViewCoordinator: WKNavigationDelegate {
     nonisolated func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         Task { @MainActor in
             self.isPageLoaded = false
-            if let htmlURL = MarkdownRenderer.viewerHTMLURL(),
-               let resourceDir = MarkdownRenderer.resourceDirectoryURL() {
-                webView.loadFileURL(htmlURL, allowingReadAccessTo: resourceDir)
+            if let html = try? MarkdownRenderer.viewerHTMLInlined() {
+                webView.loadHTMLString(html, baseURL: nil)
             }
         }
     }
