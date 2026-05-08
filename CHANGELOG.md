@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.4.0-beta.3] - 2026-05-08
+
+### Features
+
+- **Manual reload on external change** — when a file is modified by another process, a "New content" button appears in the window toolbar instead of auto-reloading; click (or press ⌘R) to refresh, preserving scroll position
+- **Recovery from WebView crashes** — WKWebView reloads itself if its content process terminates, so a backgrounded crash no longer leaves a blank document
+
+### Fixed
+
+- **Blank document on launch** — restored `com.apple.security.network.client` entitlement so the WebKit content process can launch on macOS 26; outbound network access is still blocked at the document level via a strict Content-Security-Policy meta tag
+
+### Performance
+
+- **Cold start <2s on macOS 26** — viewer.html's stylesheets and scripts are now inlined into a single `loadHTMLString` call, eliminating per-subresource WebContent↔NetworkProcess XPC stalls (each ~5s on macOS 26) that previously made cold launch take 30–60 seconds
+
 ## [1.4.0-beta.2] - 2026-03-20
 
 ### Features
