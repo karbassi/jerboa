@@ -1,12 +1,18 @@
 import SwiftUI
 
+enum DocumentSyncState {
+    case reading        // rendered Document matches the file on disk
+    case pendingReload  // file changed on disk after the last render
+    case missing        // file is no longer at its path; terminal until re-opened
+}
+
 struct ContentView: View {
     @Binding var document: MarkdownDocument
     let fileURL: URL?
     @StateObject private var coordinator = WebViewCoordinator()
     @State private var fileWatcher: FileWatcher?
     @State private var displayText: String
-    @State private var hasPendingUpdate = false
+    @State private var syncState: DocumentSyncState = .reading
     @AppStorage("sidebarVisible") private var sidebarVisible = true
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
@@ -35,9 +41,13 @@ struct ContentView: View {
             )
             .accessibilityIdentifier("markdown-webview")
             .toolbar {
-                if hasPendingUpdate {
+                if syncState == .pendingReload {
                     ToolbarItem(placement: .primaryAction) {
-                        FileUpdatedBanner(onReload: reloadFromDisk)
+                        PendingReloadIndicator(onReload: reloadFromDisk)
+                    }
+                } else if syncState == .missing {
+                    ToolbarItem(placement: .status) {
+                        MissingIndicator()
                     }
                 }
             }
@@ -79,9 +89,17 @@ private struct WindowAccessor: NSViewRepresentable {
 extension ContentView {
     private func setupFileWatcher() {
         guard let url = fileURL else { return }
-        let watcher = FileWatcher(url: url)
-        watcher.onChange = {
-            hasPendingUpdate = true
+        guard let watcher = FileWatcher(url: url) else {
+            syncState = .missing
+            return
+        }
+        watcher.onEvent = { event in
+            switch event {
+            case .changed:
+                if syncState != .missing { syncState = .pendingReload }
+            case .vanished:
+                syncState = .missing
+            }
         }
         fileWatcher = watcher
     }
@@ -89,17 +107,17 @@ extension ContentView {
     private func reloadFromDisk() {
         guard let url = fileURL,
               let data = try? Data(contentsOf: url, options: .uncached) else {
-            hasPendingUpdate = false
+            syncState = .missing
             return
         }
         let text = String(data: data, encoding: .utf8)
                ?? String(data: data, encoding: .isoLatin1) ?? ""
         displayText = text
-        hasPendingUpdate = false
+        syncState = .reading
     }
 }
 
-private struct FileUpdatedBanner: View {
+private struct PendingReloadIndicator: View {
     let onReload: () -> Void
 
     var body: some View {
@@ -109,5 +127,16 @@ private struct FileUpdatedBanner: View {
         }
         .keyboardShortcut("r", modifiers: .command)
         .help("File updated on disk — click to reload (⌘R)")
+    }
+}
+
+private struct MissingIndicator: View {
+    var body: some View {
+        HStack(spacing: 0) {
+            Text("File missing")
+                .font(.caption)
+                .foregroundStyle(.red)
+        }
+        .help("The file is no longer at its original path. Re-open it to resume reading from disk.")
     }
 }

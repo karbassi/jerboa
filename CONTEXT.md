@@ -24,6 +24,10 @@ _Avoid_: chunk, block, fold
 The state of a window when the on-disk file has been modified after Jerboa last rendered it. The Reader can apply the Pending Reload (manually) to render the new version; until they do, the displayed Document is the previous version.
 _Avoid_: pending update, stale, drift, external change
 
+**Missing**:
+The state of a window whose backing file is no longer at its original path (deleted or renamed away with no replacement). Terminal: the rendered Document remains on screen (the Reader can still read what they had), but the window cannot return to Reading or Pending Reload until the Reader re-opens the file. Distinct from Pending Reload, which means "new content available"; Missing means "no content to show."
+_Avoid_: deleted, gone, lost
+
 ## Relationships
 
 - A **Reader** opens one **Document** per window. There is exactly one Reader per window; multiple windows are independent reading sessions with no shared state.
