@@ -46,6 +46,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        #if DEBUG
+        DebugScreenshot.install()
+        #endif
+
         // Open files passed as CLI arguments on fresh launch
         let cwd = FileManager.default.currentDirectoryPath
         for arg in CommandLine.arguments.dropFirst() where !arg.hasPrefix("-") {
