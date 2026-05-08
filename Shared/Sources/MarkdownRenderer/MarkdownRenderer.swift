@@ -71,6 +71,10 @@ public enum MarkdownRenderer {
     }
 
     /// Escapes a string for safe use inside a JS template literal.
+    ///
+    /// Prefer `Rendering.RenderingOrchestrator` for routine use — it handles escaping
+    /// internally as part of the render pipeline. This entry point is exposed for callers
+    /// that need to compose JS expressions outside that pipeline.
     public static func escapeForTemplateLiteral(_ string: String) -> String {
         var utf8 = Array(string.utf8)
         var i = utf8.count - 1

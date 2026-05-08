@@ -106,6 +106,8 @@ targets:
     dependencies:
       - package: Shared
         product: MarkdownRenderer
+      - package: Shared
+        product: Rendering
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.karbassi.Jerboa.QuickLook

@@ -1,10 +1,12 @@
 import Cocoa
-import QuickLookUI
-import WebKit
 import MarkdownRenderer
+import QuickLookUI
+import Rendering
+import WebKit
 
 class PreviewViewController: NSViewController, QLPreviewingController {
     private var webView: WKWebView!
+    private var renderer: RenderingOrchestrator!
 
     override func loadView() {
         let config = WKWebViewConfiguration()
@@ -19,19 +21,17 @@ class PreviewViewController: NSViewController, QLPreviewingController {
                       ?? String(data: data, encoding: .isoLatin1) else {
             throw CocoaError(.fileReadInapplicableStringEncoding)
         }
-        let escaped = MarkdownRenderer.escapeForTemplateLiteral(text)
         let html = try MarkdownRenderer.viewerHTMLInlined()
-        let js = "window.renderMarkdown(`\(escaped)`);"
 
         await MainActor.run {
+            renderer = RenderingOrchestrator { [weak webView] js in
+                webView?.evaluateJavaScript(js)
+            }
             webView.navigationDelegate = self
             webView.loadHTMLString(html, baseURL: nil)
+            renderer.render(text)
         }
-
-        pendingJS = js
     }
-
-    private var pendingJS: String?
 
     deinit {
         webView?.navigationDelegate = nil
@@ -56,9 +56,8 @@ extension PreviewViewController: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        if let js = pendingJS {
-            pendingJS = nil
-            webView.evaluateJavaScript(js)
+        Task { @MainActor in
+            renderer?.notePageLoaded()
         }
     }
 }
