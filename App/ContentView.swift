@@ -47,16 +47,8 @@ struct ContentView: View {
                     }
                 }
             }
-            .overlay(alignment: .topTrailing) {
-                if syncState == .missing {
-                    Text("File missing")
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .padding(.top, 8)
-                        .padding(.trailing, 12)
-                }
-            }
         }
+        .background(MissingTitlebarAccessory(isVisible: syncState == .missing))
         .frame(minWidth: 700, minHeight: 500)
         .focusedSceneValue(\.coordinator, coordinator)
         .onAppear {
@@ -89,6 +81,58 @@ private struct WindowAccessor: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
+private struct MissingTitlebarAccessory: NSViewRepresentable {
+    let isVisible: Bool
+
+    private static let identifier = NSUserInterfaceItemIdentifier("JerboaMissingTitlebarAccessory")
+
+    final class Coordinator {
+        var controller: NSTitlebarAccessoryViewController?
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            sync(window: view.window, coordinator: context.coordinator)
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async {
+            sync(window: nsView.window, coordinator: context.coordinator)
+        }
+    }
+
+    private func sync(window: NSWindow?, coordinator: Coordinator) {
+        guard let window else { return }
+        if isVisible {
+            if coordinator.controller == nil {
+                let hosting = NSHostingView(rootView:
+                    Text("File missing")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding(.horizontal, 12)
+                )
+                hosting.frame.size = hosting.fittingSize
+                let vc = NSTitlebarAccessoryViewController()
+                vc.identifier = Self.identifier
+                vc.layoutAttribute = .right
+                vc.view = hosting
+                window.addTitlebarAccessoryViewController(vc)
+                coordinator.controller = vc
+            }
+        } else if let vc = coordinator.controller {
+            if let index = window.titlebarAccessoryViewControllers.firstIndex(of: vc) {
+                window.removeTitlebarAccessoryViewController(at: index)
+            }
+            coordinator.controller = nil
+        }
+    }
 }
 
 extension ContentView {
