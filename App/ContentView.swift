@@ -104,12 +104,8 @@ private struct FileUpdatedBanner: View {
 
     var body: some View {
         Button(action: onReload) {
-            HStack(spacing: 4) {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .imageScale(.small)
-                Text("New content")
-                    .font(.caption)
-            }
+            Text("New content")
+                .font(.caption)
         }
         .keyboardShortcut("r", modifiers: .command)
         .help("File updated on disk — click to reload (⌘R)")
