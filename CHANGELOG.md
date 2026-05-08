@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.4.0-beta.4] - 2026-05-08
+## [Unreleased]
 
 ### Features
 
