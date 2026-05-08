@@ -37,6 +37,8 @@ targets:
         product: MarkdownRenderer
       - package: Shared
         product: DocumentSync
+      - package: Shared
+        product: Linking
       - target: JerboaQuickLook
         embed: true
         codeSign: true

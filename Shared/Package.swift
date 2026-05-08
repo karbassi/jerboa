@@ -7,7 +7,8 @@ let package = Package(
     platforms: [.macOS(.v14)],
     products: [
         .library(name: "MarkdownRenderer", targets: ["MarkdownRenderer"]),
-        .library(name: "DocumentSync", targets: ["DocumentSync"])
+        .library(name: "DocumentSync", targets: ["DocumentSync"]),
+        .library(name: "Linking", targets: ["Linking"])
     ],
     targets: [
         .target(
@@ -24,6 +25,7 @@ let package = Package(
             ]
         ),
         .target(name: "DocumentSync"),
+        .target(name: "Linking"),
         .testTarget(
             name: "MarkdownRendererTests",
             dependencies: ["MarkdownRenderer"]
@@ -31,6 +33,10 @@ let package = Package(
         .testTarget(
             name: "DocumentSyncTests",
             dependencies: ["DocumentSync"]
+        ),
+        .testTarget(
+            name: "LinkingTests",
+            dependencies: ["Linking"]
         )
     ]
 )

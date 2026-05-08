@@ -1,5 +1,6 @@
-import WebKit
+import Linking
 import MarkdownRenderer
+import WebKit
 
 struct TOCEntry: Identifiable, Codable, Equatable {
     let id: String
@@ -18,6 +19,12 @@ final class WebViewCoordinator: NSObject, ObservableObject {
     private var webView: WKWebView?
     private var isPageLoaded = false
     private var lastRenderedText: String?
+    private let linkDispatcher: LinkActionDispatching
+
+    init(linkDispatcher: LinkActionDispatching = SystemLinkActionDispatcher()) {
+        self.linkDispatcher = linkDispatcher
+        super.init()
+    }
 
     func setup(webView: WKWebView) {
         self.webView = webView
@@ -74,18 +81,8 @@ final class WebViewCoordinator: NSObject, ObservableObject {
     }
 
     private func handleOpenLink(_ href: String) {
-        switch LinkResolver.resolve(href, relativeTo: documentDirectoryURL) {
-        case .openURL(let url):
-            NSWorkspace.shared.open(url)
-        case .openDocument(let url):
-            NSDocumentController.shared.openDocument(
-                withContentsOf: url, display: true
-            ) { _, _, _ in }
-        case .openFile(let url):
-            NSWorkspace.shared.open(url)
-        case .none:
-            break
-        }
+        let action = LinkResolver.resolve(href, relativeTo: documentDirectoryURL)
+        linkDispatcher.execute(action)
     }
 
 }

@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import Jerboa
+@testable import Linking
 
 @Suite("LinkResolver")
 struct LinkResolverTests {
