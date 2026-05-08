@@ -20,20 +20,12 @@ class PreviewViewController: NSViewController, QLPreviewingController {
             throw CocoaError(.fileReadInapplicableStringEncoding)
         }
         let escaped = MarkdownRenderer.escapeForTemplateLiteral(text)
-
-        guard let htmlURL = MarkdownRenderer.viewerHTMLURL(),
-              let resourceDir = MarkdownRenderer.resourceDirectoryURL() else {
-            throw CocoaError(.fileReadCorruptFile)
-        }
-
-        await MainActor.run {
-            webView.navigationDelegate = self
-        }
-
+        let html = try MarkdownRenderer.viewerHTMLInlined()
         let js = "window.renderMarkdown(`\(escaped)`);"
 
         await MainActor.run {
-            webView.loadFileURL(htmlURL, allowingReadAccessTo: resourceDir)
+            webView.navigationDelegate = self
+            webView.loadHTMLString(html, baseURL: nil)
         }
 
         pendingJS = js
