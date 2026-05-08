@@ -34,13 +34,13 @@ struct ContentView: View {
                 coordinator: coordinator
             )
             .accessibilityIdentifier("markdown-webview")
-            .overlay(alignment: .top) {
+            .toolbar {
                 if hasPendingUpdate {
-                    FileUpdatedBanner(onReload: reloadFromDisk)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                    ToolbarItem(placement: .primaryAction) {
+                        FileUpdatedBanner(onReload: reloadFromDisk)
+                    }
                 }
             }
-            .animation(.easeInOut(duration: 0.2), value: hasPendingUpdate)
         }
         .frame(minWidth: 700, minHeight: 500)
         .focusedSceneValue(\.coordinator, coordinator)
@@ -104,31 +104,14 @@ private struct FileUpdatedBanner: View {
 
     var body: some View {
         Button(action: onReload) {
-            HStack(spacing: 10) {
+            HStack(spacing: 4) {
                 Image(systemName: "arrow.triangle.2.circlepath")
-                    .foregroundStyle(.secondary)
-                Text("File updated on disk — click to reload")
-                    .font(.callout)
-                Spacer(minLength: 0)
-                Text("⌘R")
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.secondary)
+                    .imageScale(.small)
+                Text("New content")
+                    .font(.caption)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
         .keyboardShortcut("r", modifiers: .command)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(.separator, lineWidth: 0.5)
-        )
-        .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
-        .padding(.horizontal, 16)
-        .padding(.top, 12)
-        .help("Reload file from disk (⌘R)")
+        .help("File updated on disk — click to reload (⌘R)")
     }
 }
