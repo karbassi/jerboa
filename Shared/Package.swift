@@ -3,10 +3,11 @@
 import PackageDescription
 
 let package = Package(
-    name: "MarkdownRenderer",
+    name: "Shared",
     platforms: [.macOS(.v14)],
     products: [
-        .library(name: "MarkdownRenderer", targets: ["MarkdownRenderer"])
+        .library(name: "MarkdownRenderer", targets: ["MarkdownRenderer"]),
+        .library(name: "DocumentSync", targets: ["DocumentSync"])
     ],
     targets: [
         .target(
@@ -22,9 +23,14 @@ let package = Package(
                 .copy("Resources/viewer.js")
             ]
         ),
+        .target(name: "DocumentSync"),
         .testTarget(
             name: "MarkdownRendererTests",
             dependencies: ["MarkdownRenderer"]
+        ),
+        .testTarget(
+            name: "DocumentSyncTests",
+            dependencies: ["DocumentSync"]
         )
     ]
 )

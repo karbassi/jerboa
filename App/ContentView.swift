@@ -1,18 +1,13 @@
+import DocumentSync
 import SwiftUI
-
-enum DocumentSyncState {
-    case reading        // rendered Document matches the file on disk
-    case pendingReload  // file changed on disk after the last render
-    case missing        // file is no longer at its path; terminal until re-opened
-}
 
 struct ContentView: View {
     @Binding var document: MarkdownDocument
     let fileURL: URL?
     @StateObject private var coordinator = WebViewCoordinator()
+    @StateObject private var sync = DocumentSyncStateMachine()
     @State private var fileWatcher: FileWatcher?
     @State private var displayText: String
-    @State private var syncState: DocumentSyncState = .reading
     @AppStorage("sidebarVisible") private var sidebarVisible = true
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
@@ -41,14 +36,14 @@ struct ContentView: View {
             )
             .accessibilityIdentifier("markdown-webview")
             .toolbar {
-                if syncState == .pendingReload {
+                if sync.state == .pendingReload {
                     ToolbarItem(placement: .primaryAction) {
                         PendingReloadIndicator(onReload: reloadFromDisk)
                     }
                 }
             }
         }
-        .background(MissingTitlebarAccessory(isVisible: syncState == .missing))
+        .background(MissingTitlebarAccessory(isVisible: sync.state == .missing))
         .frame(minWidth: 700, minHeight: 500)
         .focusedSceneValue(\.coordinator, coordinator)
         .onAppear {
@@ -139,15 +134,13 @@ extension ContentView {
     private func setupFileWatcher() {
         guard let url = fileURL else { return }
         guard let watcher = FileWatcher(url: url) else {
-            syncState = .missing
+            sync.handle(.fileVanished)
             return
         }
         watcher.onEvent = { event in
             switch event {
-            case .changed:
-                if syncState != .missing { syncState = .pendingReload }
-            case .vanished:
-                syncState = .missing
+            case .changed:  sync.handle(.fileChanged)
+            case .vanished: sync.handle(.fileVanished)
             }
         }
         fileWatcher = watcher
@@ -156,13 +149,13 @@ extension ContentView {
     private func reloadFromDisk() {
         guard let url = fileURL,
               let data = try? Data(contentsOf: url, options: .uncached) else {
-            syncState = .missing
+            sync.handle(.reloadFailed)
             return
         }
         let text = String(data: data, encoding: .utf8)
                ?? String(data: data, encoding: .isoLatin1) ?? ""
         displayText = text
-        syncState = .reading
+        sync.handle(.reloadSucceeded)
     }
 }
 

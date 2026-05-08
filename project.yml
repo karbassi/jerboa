@@ -7,7 +7,7 @@ options:
   generateEmptyDirectories: true
 
 packages:
-  MarkdownRenderer:
+  Shared:
     path: Shared
 
 targets:
@@ -33,7 +33,10 @@ targets:
       Debug: BuildConfig/GitInfo.xcconfig
       Release: BuildConfig/GitInfo.xcconfig
     dependencies:
-      - package: MarkdownRenderer
+      - package: Shared
+        product: MarkdownRenderer
+      - package: Shared
+        product: DocumentSync
       - target: JerboaQuickLook
         embed: true
         codeSign: true
@@ -97,7 +100,8 @@ targets:
       Debug: BuildConfig/GitInfo.xcconfig
       Release: BuildConfig/GitInfo.xcconfig
     dependencies:
-      - package: MarkdownRenderer
+      - package: Shared
+        product: MarkdownRenderer
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.karbassi.Jerboa.QuickLook
