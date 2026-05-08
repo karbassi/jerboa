@@ -6,6 +6,7 @@ struct ContentView: View {
     @StateObject private var coordinator = WebViewCoordinator()
     @State private var fileWatcher: FileWatcher?
     @State private var displayText: String
+    @State private var hasPendingUpdate = false
     @AppStorage("sidebarVisible") private var sidebarVisible = true
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
@@ -33,6 +34,13 @@ struct ContentView: View {
                 coordinator: coordinator
             )
             .accessibilityIdentifier("markdown-webview")
+            .overlay(alignment: .top) {
+                if hasPendingUpdate {
+                    FileUpdatedBanner(onReload: reloadFromDisk)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+            .animation(.easeInOut(duration: 0.2), value: hasPendingUpdate)
         }
         .frame(minWidth: 700, minHeight: 500)
         .focusedSceneValue(\.coordinator, coordinator)
@@ -72,15 +80,55 @@ extension ContentView {
     private func setupFileWatcher() {
         guard let url = fileURL else { return }
         let watcher = FileWatcher(url: url)
-        watcher.onChange = { [url] in
-            Task.detached(priority: .userInitiated) {
-                guard let data = try? Data(contentsOf: url) else { return }
-                let text = String(data: data, encoding: .utf8)
-                       ?? String(data: data, encoding: .isoLatin1)
-                guard let text else { return }
-                await MainActor.run { displayText = text }
-            }
+        watcher.onChange = {
+            hasPendingUpdate = true
         }
         fileWatcher = watcher
+    }
+
+    private func reloadFromDisk() {
+        guard let url = fileURL,
+              let data = try? Data(contentsOf: url, options: .uncached) else {
+            hasPendingUpdate = false
+            return
+        }
+        let text = String(data: data, encoding: .utf8)
+               ?? String(data: data, encoding: .isoLatin1) ?? ""
+        displayText = text
+        hasPendingUpdate = false
+    }
+}
+
+private struct FileUpdatedBanner: View {
+    let onReload: () -> Void
+
+    var body: some View {
+        Button(action: onReload) {
+            HStack(spacing: 10) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .foregroundStyle(.secondary)
+                Text("File updated on disk — click to reload")
+                    .font(.callout)
+                Spacer(minLength: 0)
+                Text("⌘R")
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .keyboardShortcut("r", modifiers: .command)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(.separator, lineWidth: 0.5)
+        )
+        .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .help("Reload file from disk (⌘R)")
     }
 }
