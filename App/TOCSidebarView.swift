@@ -1,7 +1,8 @@
+import MarkdownRenderer
 import SwiftUI
 
 struct TOCSidebarView: View {
-    let entries: [TOCEntry]
+    let entries: [Heading]
     let activeHeadingID: String?
     let fontSize: CGFloat
     let onSelect: (String) -> Void

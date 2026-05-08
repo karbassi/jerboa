@@ -3,15 +3,9 @@ import MarkdownRenderer
 import Rendering
 import WebKit
 
-struct TOCEntry: Identifiable, Codable, Equatable {
-    let id: String
-    let title: String
-    let level: Int
-}
-
 @MainActor
 final class WebViewCoordinator: NSObject, ObservableObject {
-    @Published var tocEntries: [TOCEntry] = []
+    @Published var tocEntries: [Heading] = []
     @Published var activeHeadingID: String?
     @Published var fontSize: CGFloat = 13
 
@@ -93,7 +87,7 @@ extension WebViewCoordinator: WKScriptMessageHandler {
             case "tocData":
                 if let jsonString = message.body as? String,
                    let data = jsonString.data(using: .utf8) {
-                    let entries = (try? JSONDecoder().decode([TOCEntry].self, from: data)) ?? []
+                    let entries = (try? JSONDecoder().decode([Heading].self, from: data)) ?? []
                     self.tocEntries = entries
                 }
             case "scrollPosition":
