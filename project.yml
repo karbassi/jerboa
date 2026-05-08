@@ -39,6 +39,8 @@ targets:
         product: DocumentSync
       - package: Shared
         product: Linking
+      - package: Shared
+        product: Rendering
       - target: JerboaQuickLook
         embed: true
         codeSign: true

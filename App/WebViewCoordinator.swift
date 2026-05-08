@@ -1,5 +1,6 @@
 import Linking
 import MarkdownRenderer
+import Rendering
 import WebKit
 
 struct TOCEntry: Identifiable, Codable, Equatable {
@@ -17,9 +18,8 @@ final class WebViewCoordinator: NSObject, ObservableObject {
     var documentDirectoryURL: URL?
 
     private var webView: WKWebView?
-    private var isPageLoaded = false
-    private var lastRenderedText: String?
     private let linkDispatcher: LinkActionDispatching
+    private var renderer: RenderingOrchestrator?
 
     init(linkDispatcher: LinkActionDispatching = SystemLinkActionDispatcher()) {
         self.linkDispatcher = linkDispatcher
@@ -28,6 +28,9 @@ final class WebViewCoordinator: NSObject, ObservableObject {
 
     func setup(webView: WKWebView) {
         self.webView = webView
+        self.renderer = RenderingOrchestrator { [weak webView] js in
+            webView?.evaluateJavaScript(js)
+        }
 
         let contentController = webView.configuration.userContentController
         contentController.add(self, name: "tocData")
@@ -45,18 +48,11 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         contentController.removeScriptMessageHandler(forName: "openLink")
         webView.navigationDelegate = nil
         self.webView = nil
-        self.isPageLoaded = false
+        self.renderer = nil
     }
 
     func renderContent(_ text: String) {
-        guard text != lastRenderedText else { return }
-        lastRenderedText = text
-
-        guard isPageLoaded else { return }
-
-        let escaped = MarkdownRenderer.escapeForTemplateLiteral(text)
-        let js = "window.renderMarkdown(`\(escaped)`);"
-        webView?.evaluateJavaScript(js)
+        renderer?.render(text)
     }
 
     func scrollToHeading(_ id: String) {
@@ -134,18 +130,13 @@ extension WebViewCoordinator: WKNavigationDelegate {
 
     nonisolated func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         Task { @MainActor in
-            self.isPageLoaded = true
-            if let text = self.lastRenderedText {
-                let escaped = MarkdownRenderer.escapeForTemplateLiteral(text)
-                let js = "window.renderMarkdown(`\(escaped)`);"
-                self.webView?.evaluateJavaScript(js)
-            }
+            self.renderer?.notePageLoaded()
         }
     }
 
     nonisolated func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         Task { @MainActor in
-            self.isPageLoaded = false
+            self.renderer?.notePageTerminated()
             if let html = try? MarkdownRenderer.viewerHTMLInlined() {
                 webView.loadHTMLString(html, baseURL: nil)
             }

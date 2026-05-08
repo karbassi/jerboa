@@ -8,7 +8,8 @@ let package = Package(
     products: [
         .library(name: "MarkdownRenderer", targets: ["MarkdownRenderer"]),
         .library(name: "DocumentSync", targets: ["DocumentSync"]),
-        .library(name: "Linking", targets: ["Linking"])
+        .library(name: "Linking", targets: ["Linking"]),
+        .library(name: "Rendering", targets: ["Rendering"])
     ],
     targets: [
         .target(
@@ -26,6 +27,7 @@ let package = Package(
         ),
         .target(name: "DocumentSync"),
         .target(name: "Linking"),
+        .target(name: "Rendering", dependencies: ["MarkdownRenderer"]),
         .testTarget(
             name: "MarkdownRendererTests",
             dependencies: ["MarkdownRenderer"]
@@ -37,6 +39,10 @@ let package = Package(
         .testTarget(
             name: "LinkingTests",
             dependencies: ["Linking"]
+        ),
+        .testTarget(
+            name: "RenderingTests",
+            dependencies: ["Rendering"]
         )
     ]
 )
