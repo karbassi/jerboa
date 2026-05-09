@@ -323,25 +323,25 @@ window.renderMarkdown = (text) => {
 		_hasRendered = true;
 	}
 
-	// Defer non-critical work
 	if (isNativeApp) {
-		(window.requestIdleCallback || requestAnimationFrame)(() => {
-			// Surface all h1–h6 in the TOC; exclude the frontmatter title (h1.title)
-			// since it's a metadata header rendered separately, not a structural heading.
-			var headings = content.querySelectorAll(
-				"h1[id]:not(.title), h2[id], h3[id], h4[id], h5[id], h6[id]",
-			);
-			var entries = [];
-			headings.forEach((h) => {
-				entries.push({
-					id: h.id,
-					title: h.textContent,
-					level: parseInt(h.tagName.charAt(1), 10),
-				});
+		// Surface all h1–h6 in the TOC; exclude the frontmatter title (h1.title)
+		// since it's a metadata header rendered separately, not a structural heading.
+		var headings = content.querySelectorAll(
+			"h1[id]:not(.title), h2[id], h3[id], h4[id], h5[id], h6[id]",
+		);
+		var entries = [];
+		headings.forEach((h) => {
+			entries.push({
+				id: h.id,
+				title: h.textContent,
+				level: parseInt(h.tagName.charAt(1), 10),
 			});
-			window.webkit.messageHandlers.tocData.postMessage(
-				JSON.stringify(entries),
-			);
+		});
+		window.webkit.messageHandlers.tocData.postMessage(
+			JSON.stringify(entries),
+		);
+		// Defer scroll-tracking setup to idle so the layout has settled.
+		(window.requestIdleCallback || requestAnimationFrame)(() => {
 			initNativeScrollTracking();
 		});
 	}

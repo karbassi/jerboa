@@ -54,6 +54,20 @@ struct ContentView: View {
             if let fileURL {
                 SpotlightIndexer.index(fileURL: fileURL, text: document.text)
             }
+            #if DEBUG
+            DebugScreenshot.register {
+                [
+                    "fileURL": fileURL?.path ?? "",
+                    "syncState": String(describing: sync.state),
+                    "displayTextPrefix": String(displayText.prefix(160)),
+                    "tocEntries": coordinator.tocEntries.map {
+                        ["id": $0.id, "title": $0.title, "level": $0.level]
+                    },
+                    "activeHeadingID": coordinator.activeHeadingID ?? "",
+                    "fontSize": coordinator.fontSize,
+                ]
+            }
+            #endif
         }
         .onDisappear {
             coordinator.tearDown()

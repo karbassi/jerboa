@@ -3,16 +3,24 @@ import AppKit
 import Dispatch
 import Foundation
 
-/// Listens for SIGUSR1 and writes a snapshot of the key window (including
-/// titlebar/toolbar) to `/tmp/jerboa-screenshot.png`, or to the path in
-/// `JERBOA_SCREENSHOT_PATH` if that environment variable is set.
+/// On SIGUSR1, dumps the key window's appearance (PNG snapshot of the frame view) and
+/// a JSON sidecar with whatever observable state callers have registered via
+/// `register(stateDumper:)`. Both files land in `NSTemporaryDirectory()`, or in
+/// `JERBOA_SCREENSHOT_DIR` if that env var is set.
 ///
-/// Uses `NSView.cacheDisplay` against the window's frame view, so it works
-/// without Screen Recording permission — the app draws its own views into a
-/// bitmap. Debug-only; never compiled into Release builds.
+/// The PNG comes from `NSView.cacheDisplay`, so no Screen Recording permission is
+/// needed — but cacheDisplay can't fully capture layer-backed content (SwiftUI Lists in
+/// particular). The JSON sidecar fills that gap: callers register a closure returning
+/// the state they care about (TOC entries, sync state, displayText prefix, etc.) and
+/// the verification path reads the JSON instead of trying to OCR the screenshot.
+///
+/// Debug-only; never compiled into Release builds.
 @MainActor
 enum DebugScreenshot {
+    typealias StateDumper = @MainActor () -> [String: Any]
+
     nonisolated(unsafe) private static var source: DispatchSourceSignal?
+    nonisolated(unsafe) private static var stateDumpers: [StateDumper] = []
 
     static func install() {
         guard source == nil else { return }
@@ -25,14 +33,27 @@ enum DebugScreenshot {
         source = s
     }
 
+    /// Register a closure that returns the state to dump alongside the next snapshot.
+    /// Called on every SIGUSR1; if multiple windows register, all are dumped under their
+    /// own keys (window title or index).
+    static func register(stateDumper: @escaping StateDumper) {
+        stateDumpers.append(stateDumper)
+    }
+
     @MainActor
     private static func capture() {
+        let dir = ProcessInfo.processInfo.environment["JERBOA_SCREENSHOT_DIR"]
+            ?? NSTemporaryDirectory()
+
+        capturePNG(toDir: dir)
+        captureState(toDir: dir)
+    }
+
+    @MainActor
+    private static func capturePNG(toDir dir: String) {
         guard let window = NSApp.keyWindow ?? NSApp.windows.first(where: { $0.isVisible }) else {
             return
         }
-        // The frame view (NSThemeFrame) contains the contentView plus the
-        // titlebar/toolbar/traffic-light area. cacheDisplay against it gives
-        // us the whole window without Screen Recording permission.
         let frameView = window.contentView?.superview ?? window.contentView
         guard let view = frameView else { return }
         let bounds = view.bounds
@@ -45,15 +66,33 @@ enum DebugScreenshot {
             NSLog("[DebugScreenshot] PNG encoding failed")
             return
         }
-        // Sandboxed apps cannot write to /tmp; use the app's tmp container directory.
-        let dir = ProcessInfo.processInfo.environment["JERBOA_SCREENSHOT_DIR"]
-            ?? NSTemporaryDirectory()
         let path = (dir as NSString).appendingPathComponent("jerboa-screenshot.png")
         do {
             try png.write(to: URL(fileURLWithPath: path))
             NSLog("[DebugScreenshot] wrote %d bytes to %@", png.count, path)
         } catch {
             NSLog("[DebugScreenshot] write failed: %@", error.localizedDescription)
+        }
+    }
+
+    @MainActor
+    private static func captureState(toDir dir: String) {
+        guard !stateDumpers.isEmpty else { return }
+        var windows: [[String: Any]] = []
+        for dumper in stateDumpers {
+            windows.append(dumper())
+        }
+        let payload: [String: Any] = ["windows": windows]
+        let path = (dir as NSString).appendingPathComponent("jerboa-state.json")
+        do {
+            let data = try JSONSerialization.data(
+                withJSONObject: payload,
+                options: [.prettyPrinted, .sortedKeys]
+            )
+            try data.write(to: URL(fileURLWithPath: path))
+            NSLog("[DebugScreenshot] wrote state for %d window(s) to %@", windows.count, path)
+        } catch {
+            NSLog("[DebugScreenshot] state dump failed: %@", error.localizedDescription)
         }
     }
 }
