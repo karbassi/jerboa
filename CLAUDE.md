@@ -7,29 +7,31 @@ Lightweight, native macOS Markdown viewer. Read-only, no editor. Swift/SwiftUI s
 ```
 App/                          SwiftUI app target
   JerboaApp.swift             entry point, scene, menu commands, URL scheme
-  ContentView.swift           document view, sidebar, file watcher, reload pill
+  ContentView.swift           document view, sidebar, file watcher, reload button
   MarkdownWebView.swift       NSViewRepresentable wrapping WKWebView
   WebViewCoordinator.swift    JS bridge, navigation/script handlers, crash recovery
-  FileWatcher.swift           DispatchSource-based file change watcher
+  FileWatcher.swift           DispatchSource-based file change watcher (O_EVTONLY)
   MarkdownDocument.swift      ReferenceFileDocument (read-only)
-  LinkResolver.swift          [[wikilinks]] / relative path resolution
   SpotlightIndexer.swift      CoreSpotlight indexing for opened files
   TOCSidebarView.swift        table-of-contents sidebar
-  Jerboa.entitlements         sandbox + network.client (required for WebKit)
+  DebugScreenshot.swift       SIGUSR1 → window PNG + state JSON sidecar (DEBUG only)
+  Jerboa.entitlements         empty (sandbox dropped — see ADR-0009)
   Info.plist                  bundle metadata, document types, URL scheme
 
-Shared/Sources/MarkdownRenderer/   Swift package
-  MarkdownRenderer.swift            inlined-HTML helper, escape utilities
-  Resources/                        viewer.html, viewer.js, *.css, markdown-it bundles
-Shared/Tests/MarkdownRendererTests/ swift test target
+Shared/                                  Swift package — testable via `swift test`
+  Sources/MarkdownRenderer/              viewer.html, viewer.js, *.css, markdown-it bundles, Heading struct, escape helper, viewerHTMLInlined()
+  Sources/DocumentSync/                  Reading | Pending Reload | Missing state machine (ADR-0007)
+  Sources/Linking/                       LinkResolver + LinkActionDispatching (resolve href → execute action)
+  Sources/Rendering/                     RenderingOrchestrator (queue render, dedupe, fire on page-loaded)
+  Tests/                                 one test target per module; 46 tests, all green via swift test
 
-Tests/JerboaTests/             XCTest unit tests (FileWatcher, LinkResolver, TOC, render benchmarks)
-Tests/JerboaUITests/           XCUITest end-to-end
-Tests/js/                      JS tests for viewer.js
+Tests/JerboaTests/             XCTest unit tests (FileWatcher, render benchmarks, linkify)
+Tests/JerboaUITests/           XCUITest end-to-end (currently blocked by macOS Accessibility permission — see Gotchas)
+Tests/js/                      vitest tests for viewer.js
 
-QuickLook/                     QuickLook preview extension (.appex)
+QuickLook/                     QuickLook preview extension (.appex), uses RenderingOrchestrator (#22)
 docs/agents/                   agent-skill conventions (issue tracker, labels, domain)
-docs/adr/                      architecture decision records
+docs/adr/                      architecture decision records (0001-0009)
 project.yml                    XcodeGen config; .xcodeproj is generated, not checked in
 .mise.toml                     dev task runner (build/test/lint/sign/zip)
 biome.json                     CSS/JS linter+formatter config
@@ -42,9 +44,9 @@ Run via `mise run <task>`. The full list lives in `.mise.toml`; the ones you'll 
 - `mise run generate` — regenerate `Jerboa.xcodeproj` from `project.yml` (also stamps `BuildConfig/GitInfo.local.xcconfig` with the current git SHA + tag-derived version)
 - `mise run build` — build the app
 - `mise run debug` / `mise run run` — Debug build / Debug build + launch
+- `mise run test-package` — `swift test` in `Shared/` (46 tests, fast, reliable — preferred for unit testing)
+- `mise run test-js` — vitest tests for `viewer.js`
 - `mise run test` — full XCTest suite (currently flaky to bootstrap on macOS 26; see Gotchas)
-- `mise run test-package` — `swift test` against the `MarkdownRenderer` package only (fast, reliable)
-- `mise run test-js` — JS tests for `viewer.js`
 - `mise run lint` / `mise run lint:fix` — Biome on CSS/JS
 - `mise run sign` / `mise run zip` / `mise run install` — release packaging
 
@@ -52,15 +54,16 @@ Run via `mise run <task>`. The full list lives in `.mise.toml`; the ones you'll 
 
 ## Invariants and gotchas
 
-- **Read-only.** The app never writes the open file. The watcher uses `O_EVTONLY`. Don't add code that modifies, renames, or backs up the user's `.md`. `MarkdownDocument` is bound only for SwiftUI; rendered content is a separate `displayText` state to prevent dirty-state side effects.
-- **Sandboxed.** `com.apple.security.app-sandbox` + `com.apple.security.files.user-selected.read-only`. WKWebView additionally requires `com.apple.security.network.client` to launch its content process on macOS 26 — outbound network is then blocked at the document level by the strict CSP in `viewer.html`. Don't remove either.
-- **Viewer subresources are inlined.** `MarkdownRenderer.viewerHTMLInlined()` reads viewer.html and embeds every `<link>`/`<script src>` as `<style>`/`<script>` before `loadHTMLString(_:baseURL: nil)`. This avoids a macOS 26 WebContent↔NetworkProcess XPC stall (~5s per subresource) that made cold launch take 30–60s. Don't switch back to `loadFileURL` with separate subresource fetches.
-- **CSP is intentionally tight.** `default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' file: data:; connect-src 'none';` — the `'unsafe-inline'` is acceptable because we own the shell HTML; `connect-src 'none'` blocks any outbound XHR/fetch from rendered Markdown. New external dependencies must be inlined, not linked.
-- **External file changes notify, don't auto-reload.** `FileWatcher.onChange` flips `hasPendingUpdate = true`; a "New content" button appears in the window toolbar. Clicking it (or ⌘R) calls `reloadFromDisk()` which preserves scroll position via `viewer.js` saving/restoring `window.scrollY` across `renderMarkdown` calls.
+- **Read-only.** The app never writes the open file. The watcher uses `O_EVTONLY`; `MarkdownDocument` exposes no write path. Don't add code that modifies, renames, or backs up the user's `.md`. Rendered content is a separate `displayText` state to prevent dirty-state side effects.
+- **No app sandbox.** `Jerboa.entitlements` is intentionally empty. Read-only is enforced in code; outbound network from rendered Markdown is blocked by CSP. See ADR-0009 for what was lost (kernel-level fallback for CSP-bypass, MAS path) and why the trade-off favours not having it.
+- **Viewer subresources are inlined.** `MarkdownRenderer.viewerHTMLInlined()` reads viewer.html and embeds every `<link>`/`<script src>` as `<style>`/`<script>` before `loadHTMLString(_:baseURL: nil)`. This avoids a macOS 26 WebContent↔NetworkProcess XPC stall (~5s per subresource) that made cold launch take 30–60s. Don't switch back to `loadFileURL` with separate subresource fetches (ADR-0003).
+- **CSP is intentionally tight.** `default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' file: data:; connect-src 'none';` — the `'unsafe-inline'` is acceptable because we own the shell HTML; `connect-src 'none'` blocks any outbound XHR/fetch from rendered Markdown. New external dependencies must be inlined, not linked. CSP is the security boundary now that the sandbox is gone.
+- **External file changes notify, don't auto-reload.** `FileWatcher.onEvent` is consumed by `DocumentSyncStateMachine` (ADR-0007). When in `pendingReload`, a "New content" button appears in the window toolbar. `File → Reload (⌘R)` is always available when a Document is focused — including in `reading` state for force-refresh.
+- **Cross-Document link clicks open in Jerboa.** `SystemLinkActionDispatcher.openDocument` uses `NSWorkspace.shared.open(_:withApplicationAt:configuration:)` with `Bundle.main.bundleURL`, otherwise Launch Services would route Markdown links to whatever app the Reader has set as their default `.md` handler.
 - **Version comes from git tags.** `project.yml` sets `MARKETING_VERSION = $(GIT_VERSION)`, which `mise run generate` populates from `git describe --tags`. Don't hardcode a version in `Info.plist` or anywhere else.
 - **`.xcodeproj` is generated.** Edit `project.yml` then `mise run generate`. Don't hand-edit the project file.
-- **macOS 26 quirks.** WebKit logs a benign-but-loud `<rdar://problem/28724618>` launchservicesd-denial CRASHSTRING in `WebContent` — Safari hits it too; ignore. Real performance issues show up as 5s gaps between WebKit `URL will be scheduled` and `Resource is being scheduled` log lines.
-- **Test runner flake.** `mise run test` (full XCTest) currently fails to bootstrap on this machine's macOS 26 + Xcode combo with "test runner exited with code 0 before establishing connection" — this is pre-existing and not caused by app code. `mise run test-package` and `mise run test-js` work reliably.
+- **Test-runner flake on this machine.** `mise run test` (full XCTest) and `JerboaUITests` both fail to bootstrap on macOS 26: the unit-test runner exits with code 0 before establishing connection; the UI-test runner times out at "enabling automation mode" (Accessibility permission gap). `mise run test-package` and `mise run test-js` work reliably and cover most logic.
+- **Autonomous UI verification is via the Debug snapshot.** `kill -USR1 $(pgrep -x Jerboa)` (Debug builds only) writes `${TMPDIR}/jerboa-screenshot.png` (window pixels via `cacheDisplay` — no Screen Recording permission needed) and `${TMPDIR}/jerboa-state.json` (TOC entries, sync state, file URL, scroll-tracked active heading). Use the JSON for verifying SwiftUI Lists and other layer-backed views that `cacheDisplay` can't reliably capture.
 
 ## Release flow
 
@@ -73,6 +76,7 @@ Run via `mise run <task>`. The full list lives in `.mise.toml`; the ones you'll 
 ## Conventions
 
 - Commit messages are sentence-form summaries with a body explaining the why; no Conventional Commits prefix. Co-authored trailers stay.
+- Push to `origin main` automatically after committing — explicit user direction in this repo.
 - Issue tracker, triage labels, and domain docs are formalised under `docs/agents/` — see the next section.
 - Don't create `AGENTS.md`; this project uses `CLAUDE.md` as the agent-instructions file.
 
@@ -88,4 +92,4 @@ Canonical names: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-hum
 
 ### Domain docs
 
-Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root (created lazily by `/grill-with-docs` — absence is fine). See `docs/agents/domain.md`.
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. Read both before doing architecture work — they record the scope rule, glossary (Reader, Document, Heading, Section, Pending Reload, Missing), and decisions like the sandbox removal, the watcher state machine, the inlined-HTML loading strategy, and the titlebar-indicator primitives. See `docs/agents/domain.md`.
