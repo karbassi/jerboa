@@ -175,10 +175,19 @@ struct CoordinatorKey: FocusedValueKey {
     typealias Value = WebViewCoordinator
 }
 
+struct ReloadActionKey: FocusedValueKey {
+    typealias Value = () -> Void
+}
+
 extension FocusedValues {
     var coordinator: WebViewCoordinator? {
         get { self[CoordinatorKey.self] }
         set { self[CoordinatorKey.self] = newValue }
+    }
+
+    var reloadAction: (() -> Void)? {
+        get { self[ReloadActionKey.self] }
+        set { self[ReloadActionKey.self] = newValue }
     }
 }
 
@@ -186,6 +195,7 @@ extension FocusedValues {
 struct JerboaApp: App {
     @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
     @FocusedValue(\.coordinator) private var coordinator
+    @FocusedValue(\.reloadAction) private var reloadAction
 
     var body: some Scene {
         DocumentGroup(viewing: MarkdownDocument.self) { file in
@@ -208,6 +218,13 @@ struct JerboaApp: App {
                         .applicationVersion: "\(version) (\(sha))",
                     ])
                 }
+            }
+            CommandGroup(after: .newItem) {
+                Button("Reload") {
+                    reloadAction?()
+                }
+                .keyboardShortcut("r", modifiers: .command)
+                .disabled(reloadAction == nil)
             }
             CommandGroup(after: .toolbar) {
                 Button("Reset Font Size") {

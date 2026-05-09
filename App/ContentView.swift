@@ -46,6 +46,7 @@ struct ContentView: View {
         .background(MissingTitlebarAccessory(isVisible: sync.state == .missing))
         .frame(minWidth: 700, minHeight: 500)
         .focusedSceneValue(\.coordinator, coordinator)
+        .focusedSceneValue(\.reloadAction, reloadFromDisk)
         .onAppear {
             columnVisibility = sidebarVisible ? .all : .detailOnly
             coordinator.documentDirectoryURL = fileURL?.deletingLastPathComponent()
@@ -167,7 +168,6 @@ private struct PendingReloadIndicator: View {
             Text("New content")
                 .font(.caption)
         }
-        .keyboardShortcut("r", modifiers: .command)
         .help("File updated on disk — click to reload (⌘R)")
     }
 }
