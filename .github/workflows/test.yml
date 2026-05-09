@@ -29,6 +29,9 @@ jobs:
       - name: Install
         run: npm install --no-audit --no-fund
         working-directory: Tests/js
+      - name: Install Playwright WebKit
+        run: npx playwright install webkit
+        working-directory: Tests/js
       - name: Run vitest
         run: npx vitest run
         working-directory: Tests/js
