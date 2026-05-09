@@ -6,15 +6,22 @@
 
 - **File-missing indicator** — when the open file is deleted or renamed away externally, a red "File missing" label appears in the window titlebar; the rendered Document stays on screen so the Reader can keep reading. Re-open the file to resume.
 - **Atomic-save disambiguation** — saves from editors that write-then-rename (vim with `backupcopy=auto`, VS Code default save, etc.) are now reliably picked up as content updates instead of being misidentified as deletions.
+- **File → Reload menu item, ⌘R** — always enabled when a Document is open. Force-reload works whether or not the watcher has detected a change, and re-reads the file from disk through the same path as the "New content" button.
 
 ### Fixed
 
 - **Markdown-only document routing** — `LSItemContentTypes` advertised `public.plain-text` alongside `net.daringfireball.markdown`, letting LaunchServices route any `.txt` or other plain-text file at Jerboa. Removed at the source (`project.yml`) so `xcodegen generate` can't reintroduce it.
+- **Cross-Document link clicks** — clicking a Markdown link to a sibling `.md` file now opens it in a new Jerboa window per ADR-0001's window-per-Document rule. Previously failed silently with a sandbox `Permission denied` because `com.apple.security.files.user-selected.read-only` only granted access to the file the Reader explicitly opened.
 
 ### Improved
 
+- **No sandbox** — Jerboa no longer declares `com.apple.security.app-sandbox`. Read-only is enforced in code (`O_EVTONLY` watcher; no write paths) and the renderer's CSP still blocks outbound network requests from rendered Markdown. Side effect: cold start drops to under 2 seconds reliably (no per-subresource sandbox-extension stalls). See ADR-0009.
 - **QuickLook preview cold start** — the QuickLook extension now uses the same inlined-HTML loading strategy as the main app, sidestepping the macOS 26 WebContent ↔ NetworkProcess subresource stalls that affected preview generation.
-- **Project documentation** — added `CLAUDE.md`, `CONTEXT.md`, and architecture decision records under `docs/adr/` covering the scope rule, rendering pipeline, watcher state machine, and titlebar-indicator primitives. Added a Debug-only `SIGUSR1` window-snapshot mechanism for autonomous UI verification.
+- **Project documentation** — added `CLAUDE.md`, `CONTEXT.md`, and architecture decision records under `docs/adr/` covering the scope rule, rendering pipeline, watcher state machine, titlebar-indicator primitives, and sandbox removal. Added a Debug-only `SIGUSR1` window-snapshot mechanism for autonomous UI verification.
+
+### Internal
+
+- Domain-aligned rename: `TOCEntry` → `Heading` (per CONTEXT.md). Watcher state machine, link routing, and viewer subresource loading extracted into testable Swift packages (`DocumentSync`, `Linking`, `Rendering`). Test coverage went from 13 to 46 tests, all running via `swift test`.
 
 ## [1.4.0-beta.3] - 2026-05-08
 
