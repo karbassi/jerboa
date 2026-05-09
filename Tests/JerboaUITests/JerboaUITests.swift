@@ -1,156 +1,114 @@
 import XCTest
 
-final class JerboaUITests: JerboaUITestCase {
-
-    // MARK: - Window & Layout
-
-    func testWindowExists() {
-        let window = app.windows.firstMatch
-        XCTAssertTrue(window.waitForExistence(timeout: 5))
-        takeScreenshot(named: "window-exists")
+/// Read-only UI tests against a representative Markdown fixture.
+///
+/// Fixture: `mxstbr/markdown-test-file` (single file derived from John Gruber's
+/// Markdown reference, exercising most syntax). Small enough to render fast,
+/// broad enough to catch syntax-coverage regressions. One launch shared across
+/// the suite; no test mutates state.
+final class JerboaReadOnlyUITests: JerboaUITestCase {
+    override class func setUp() {
+        super.setUp()
+        launchSharedApp(fixture: "markdown-test-file.md")
     }
 
-    func testWindowTitle() {
+    override class func tearDown() {
+        terminateSharedApp()
+        super.tearDown()
+    }
+
+    /// End-to-end render proof: window appears with the right title; the SwiftUI
+    /// sidebar binds to the headings emitted by viewer.js over the tocData
+    /// script message; specific accessibility identifiers (set in TOCSidebarView)
+    /// match the slugs viewer.js generates.
+    func testDocumentRendersWithPopulatedSidebar() {
         let window = app.windows.firstMatch
         XCTAssertTrue(window.waitForExistence(timeout: 5))
-        let title = window.title
         XCTAssertTrue(
-            title.contains("commonmark-spec"),
-            "Window title should contain filename, got: \(title)"
+            window.title.contains("markdown-test-file"),
+            "Window title should contain the fixture filename, got: \(window.title)"
         )
-    }
 
-    // MARK: - TOC Sidebar
-
-    func testTOCSidebarShowsEntries() {
         let sidebar = app.outlines.firstMatch
-        XCTAssertTrue(sidebar.waitForExistence(timeout: 10))
-        let count = sidebar.buttons.count
-        XCTAssertGreaterThan(count, 0, "TOC sidebar should have heading entries")
-        takeScreenshot(named: "toc-sidebar-populated")
-    }
+        XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
 
-    func testTOCSidebarHasMultipleEntries() {
-        let sidebar = app.outlines.firstMatch
-        XCTAssertTrue(sidebar.waitForExistence(timeout: 10))
-        let count = sidebar.buttons.count
-        // commonmark-spec.md has many headings
-        XCTAssertGreaterThan(count, 5, "TOC should have many entries for commonmark spec, got: \(count)")
-    }
-
-    func testTOCClickChangesActiveHeading() {
-        let sidebar = app.outlines.firstMatch
-        XCTAssertTrue(sidebar.waitForExistence(timeout: 10))
-
-        let buttons = sidebar.buttons
-        guard buttons.count > 1 else {
-            XCTFail("Need at least 2 TOC entries to test navigation")
-            return
-        }
-
-        let lastButton = buttons.element(boundBy: buttons.count - 1)
-        lastButton.click()
-
-        Thread.sleep(forTimeInterval: 2)
-
-        XCTAssertEqual(
-            lastButton.value as? String, "active",
-            "Clicked TOC entry should become active"
+        // Lower-bound assertion — the upstream fixture may evolve over time.
+        XCTAssertGreaterThan(
+            sidebar.buttons.count, 10,
+            "TOC should populate from a representative Markdown document"
         )
-        takeScreenshot(named: "toc-click-last-heading")
-    }
 
-    func testTOCClickFirstHeading() {
-        let sidebar = app.outlines.firstMatch
-        XCTAssertTrue(sidebar.waitForExistence(timeout: 10))
-
-        let buttons = sidebar.buttons
-        guard buttons.count > 0 else {
-            XCTFail("Need at least 1 TOC entry")
-            return
-        }
-
-        let firstButton = buttons.element(boundBy: 0)
-        firstButton.click()
-
-        Thread.sleep(forTimeInterval: 2)
-
-        XCTAssertEqual(
-            firstButton.value as? String, "active",
-            "First TOC entry should be active after clicking it"
-        )
-    }
-
-    // MARK: - Scroll Persistence
-
-    func testScrollDoesNotSnapBack() {
-        let sidebar = app.outlines.firstMatch
-        XCTAssertTrue(sidebar.waitForExistence(timeout: 10))
-
-        let buttons = sidebar.buttons
-        guard buttons.count > 1 else {
-            XCTFail("Need at least 2 TOC entries to test scroll persistence")
-            return
-        }
-
-        let firstButton = buttons.element(boundBy: 0)
-        let lastButton = buttons.element(boundBy: buttons.count - 1)
-
-        lastButton.click()
-        Thread.sleep(forTimeInterval: 2)
-
-        XCTAssertEqual(lastButton.value as? String, "active",
-                       "Last heading should be active after clicking it")
-
-        takeScreenshot(named: "scroll-at-bottom")
-
-        // Wait 2 more seconds -- the old bug would snap scroll back to top here
-        Thread.sleep(forTimeInterval: 2)
-
-        XCTAssertEqual(lastButton.value as? String, "active",
-                       "Scroll should NOT snap back -- last heading should still be active")
-        XCTAssertNotEqual(firstButton.value as? String, "active",
-                          "First heading should NOT become active -- scroll snapped back")
-
-        takeScreenshot(named: "scroll-still-at-bottom")
-    }
-
-    func testScrollToMiddleThenNeighbor() {
-        let sidebar = app.outlines.firstMatch
-        XCTAssertTrue(sidebar.waitForExistence(timeout: 10))
-
-        let buttons = sidebar.buttons
-        guard buttons.count > 3 else {
-            XCTFail("Need at least 4 TOC entries")
-            return
-        }
-
-        let midIndex = buttons.count / 2
-        let midButton = buttons.element(boundBy: midIndex)
-        midButton.click()
-        Thread.sleep(forTimeInterval: 2)
-
-        XCTAssertEqual(midButton.value as? String, "active",
-                       "Middle heading should be active")
-
-        // Click a nearby heading (one before mid) to verify navigation works both directions
-        let prevButton = buttons.element(boundBy: midIndex - 1)
-        prevButton.click()
-        Thread.sleep(forTimeInterval: 2)
-
-        XCTAssertEqual(prevButton.value as? String, "active",
-                       "Previous heading should be active after clicking it")
-        XCTAssertEqual(midButton.value as? String, "inactive",
-                       "Middle heading should no longer be active")
-    }
-
-    // MARK: - Helpers
-
-    private func takeScreenshot(named name: String) {
-        let screenshot = app.windows.firstMatch.screenshot()
-        let attachment = XCTAttachment(screenshot: screenshot)
-        attachment.name = name
-        attachment.lifetime = .keepAlways
-        add(attachment)
+        // Specific entries with stable slugs — proves TOCSidebarView's
+        // accessibility identifiers match viewer.js's slug generation.
+        XCTAssertTrue(sidebar.buttons["toc-overview"].exists)
+        XCTAssertTrue(sidebar.buttons["toc-block-elements"].exists)
     }
 }
+
+/// Tests that mutate state (reload from disk) launch a fresh app per test.
+final class JerboaStateMutatingUITests: JerboaUITestCase {
+    private var workdir: URL!  // swiftlint:disable:this implicitly_unwrapped_optional
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        workdir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("jerboa-uitests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: workdir, withIntermediateDirectories: true)
+    }
+
+    override func tearDownWithError() throws {
+        app?.terminate()
+        app = nil
+        if let workdir { try? FileManager.default.removeItem(at: workdir) }
+        try super.tearDownWithError()
+    }
+
+    /// File → Reload (⌘R) is always available and re-reads the file from disk.
+    /// Covers the menu wiring, the FocusedValue plumbing in JerboaApp, the
+    /// reloadFromDisk path through DocumentSyncStateMachine, and the rendering
+    /// orchestrator picking up the new content.
+    func testForceReloadViaMenuShortcut() throws {
+        let fixture = workdir.appendingPathComponent("doc.md")
+        try "# Original\n".write(to: fixture, atomically: true, encoding: .utf8)
+        app = Self.launchApp(fixturePath: fixture.path)
+
+        XCTAssertTrue(
+            app.outlines.firstMatch.buttons["toc-original"].waitForExistence(timeout: 5),
+            "Initial heading should appear in TOC"
+        )
+
+        // Mutate the file and force-reload via ⌘R.
+        try "# Forced\n".write(to: fixture, atomically: true, encoding: .utf8)
+        app.typeKey("r", modifierFlags: .command)
+
+        XCTAssertTrue(
+            app.outlines.firstMatch.buttons["toc-forced"].waitForExistence(timeout: 5),
+            "⌘R should pick up the new content"
+        )
+    }
+}
+
+// MARK: - Coverage notes for behaviours not exercised at the XCUITest level
+//
+// The following behaviours have been deliberately left to lower-level tests
+// rather than XCUITest, because they're either unreliable to assert via
+// XCUIElement (platform quirks) or already exhaustively covered:
+//
+// - TOC click → active heading marker. Covered by:
+//   - DocumentSyncStateMachine unit tests (state transitions)
+//   - viewer.js vitest tests (scrollPosition message round-trip)
+//   - SwiftUI Button → accessibilityValue binding is a one-liner with no
+//     conditional logic — testing it via XCUITest's `value` property is
+//     unreliable on macOS (accessibilityValue doesn't always surface as
+//     XCUIElement.value for Buttons inside a List).
+//
+// - Cross-Document link click opens new window. Covered by:
+//   - LinkResolverTests (href → LinkAction)
+//   - LinkActionDispatcherTests (LinkAction → openURL/openDocument closures)
+//   - Manually verified during #23 work that NSWorkspace.OpenConfiguration
+//     with Bundle.main.bundleURL routes back to Jerboa specifically.
+//
+// - Pending Reload button appears on external change. Covered by:
+//   - FileWatcherTests (write → .changed; rename/delete + reopen-fail → .vanished)
+//   - DocumentSyncStateMachineTests (every transition in ADR-0007's table)
+//   - SwiftUI's @Published binding to .pendingReload is a one-liner.
