@@ -52,3 +52,20 @@ jobs:
             -destination 'platform=macOS' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO
+
+  ui-tests:
+    name: XCUITest (JerboaUITests)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install xcodegen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Run UI tests
+        run: |
+          xcodebuild test \
+            -project Jerboa.xcodeproj \
+            -scheme JerboaUITests \
+            -destination 'platform=macOS' \
+            CODE_SIGNING_ALLOWED=NO
