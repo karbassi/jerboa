@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: "20"
       - name: Install
-        run: npm ci
+        run: npm install --no-audit --no-fund
         working-directory: Tests/js
       - name: Run vitest
         run: npx vitest run
