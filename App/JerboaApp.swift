@@ -1,3 +1,4 @@
+import JerboaCLI
 import SwiftUI
 
 private let bundleID = "com.karbassi.Jerboa"
@@ -5,41 +6,35 @@ private let bundleID = "com.karbassi.Jerboa"
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     override init() {
         let args = Array(CommandLine.arguments.dropFirst())
+        let cwd = FileManager.default.currentDirectoryPath
+        let action = JerboaCLI.parse(arguments: args, cwd: cwd)
 
-        if args.contains("--help") || args.contains("-h") {
-            print("""
-            Usage: jerboa [file ...]
-
-            Open markdown files in Jerboa.
-
-              jerboa file.md            Open a file
-              jerboa file1.md file2.md  Open multiple files
-              jerboa                    Launch Jerboa
-              jerboa --help             Show this help
-            """)
+        switch action {
+        case .showHelp:
+            print(JerboaCLI.helpText)
             exit(0)
-        }
 
-        // If another instance is already running, delegate to it and exit
-        let others = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-            .filter { $0.processIdentifier != ProcessInfo.processInfo.processIdentifier }
-
-        if !others.isEmpty {
-            let fileArgs = args.filter { !$0.hasPrefix("-") }
-            if fileArgs.isEmpty {
-                others.first?.activate()
-            } else {
-                let cwd = FileManager.default.currentDirectoryPath
-                for arg in fileArgs {
-                    let path = arg.hasPrefix("/") ? arg : cwd + "/" + arg
+        case .openFiles(let paths):
+            let others = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+                .filter { $0.processIdentifier != ProcessInfo.processInfo.processIdentifier }
+            if !others.isEmpty {
+                for path in paths {
                     let process = Process()
                     process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
                     process.arguments = ["-b", bundleID, path]
                     try? process.run()
                     process.waitUntilExit()
                 }
+                exit(0)
             }
-            exit(0)
+
+        case .launch:
+            let others = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+                .filter { $0.processIdentifier != ProcessInfo.processInfo.processIdentifier }
+            if let other = others.first {
+                other.activate()
+                exit(0)
+            }
         }
 
         super.init()
@@ -52,11 +47,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         // Open files passed as CLI arguments on fresh launch
         let cwd = FileManager.default.currentDirectoryPath
-        for arg in CommandLine.arguments.dropFirst() where !arg.hasPrefix("-") {
-            let path = arg.hasPrefix("/") ? arg : cwd + "/" + arg
-            let fileURL = URL(fileURLWithPath: path)
-            NSDocumentController.shared.openDocument(
-                withContentsOf: fileURL, display: true) { _, _, _ in }
+        let action = JerboaCLI.parse(
+            arguments: Array(CommandLine.arguments.dropFirst()),
+            cwd: cwd
+        )
+        if case .openFiles(let paths) = action {
+            for path in paths {
+                NSDocumentController.shared.openDocument(
+                    withContentsOf: URL(fileURLWithPath: path),
+                    display: true
+                ) { _, _, _ in }
+            }
         }
 
         // Handle jerboa:// URL scheme

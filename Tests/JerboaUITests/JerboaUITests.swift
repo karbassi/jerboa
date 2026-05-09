@@ -63,6 +63,37 @@ final class JerboaStateMutatingUITests: JerboaUITestCase {
         try super.tearDownWithError()
     }
 
+    /// Clicking a Markdown link to a sibling `.md` opens it in a new Jerboa
+    /// window per ADR-0001's window-per-Document rule. Exercises the full chain:
+    /// WebView click → openLink message → LinkResolver →
+    /// SystemLinkActionDispatcher → NSWorkspace open with bundle URL →
+    /// second window in the same process.
+    func testCrossDocumentLinkOpensSecondWindow() throws {
+        let hub = workdir.appendingPathComponent("hub.md")
+        let target = workdir.appendingPathComponent("target.md")
+        try "# Hub\n\n[Open Target](target.md)\n".write(to: hub, atomically: true, encoding: .utf8)
+        try "# Target Document\n\nReached.\n".write(to: target, atomically: true, encoding: .utf8)
+
+        app = Self.launchApp(fixturePath: hub.path)
+        let initialWindowCount = app.windows.count
+
+        // The link in hub.md is rendered as <a href="target.md">Open Target</a>.
+        // WKWebView surfaces it as an XCUI link by accessibility.
+        let link = app.windows.firstMatch.links["Open Target"]
+        XCTAssertTrue(link.waitForExistence(timeout: 5), "Markdown link should be accessible")
+        link.click()
+
+        // Wait for window count to increase. Robust to whatever window names
+        // macOS or state restoration assigns.
+        let predicate = NSPredicate(format: "count > %d", initialWindowCount)
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: app.windows)
+        XCTAssertEqual(
+            XCTWaiter().wait(for: [expectation], timeout: 10),
+            .completed,
+            "Clicking a Markdown link should open a new window (started with \(initialWindowCount), now \(app.windows.count))"
+        )
+    }
+
     /// File → Reload (⌘R) is always available and re-reads the file from disk.
     /// Covers the menu wiring, the FocusedValue plumbing in JerboaApp, the
     /// reloadFromDisk path through DocumentSyncStateMachine, and the rendering

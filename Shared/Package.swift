@@ -9,7 +9,8 @@ let package = Package(
         .library(name: "MarkdownRenderer", targets: ["MarkdownRenderer"]),
         .library(name: "DocumentSync", targets: ["DocumentSync"]),
         .library(name: "Linking", targets: ["Linking"]),
-        .library(name: "Rendering", targets: ["Rendering"])
+        .library(name: "Rendering", targets: ["Rendering"]),
+        .library(name: "JerboaCLI", targets: ["JerboaCLI"])
     ],
     targets: [
         .target(
@@ -28,6 +29,7 @@ let package = Package(
         .target(name: "DocumentSync"),
         .target(name: "Linking"),
         .target(name: "Rendering", dependencies: ["MarkdownRenderer"]),
+        .target(name: "JerboaCLI"),
         .testTarget(
             name: "MarkdownRendererTests",
             dependencies: ["MarkdownRenderer"]
@@ -43,6 +45,10 @@ let package = Package(
         .testTarget(
             name: "RenderingTests",
             dependencies: ["Rendering"]
+        ),
+        .testTarget(
+            name: "JerboaCLITests",
+            dependencies: ["JerboaCLI"]
         )
     ]
 )

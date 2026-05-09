@@ -41,6 +41,8 @@ targets:
         product: Linking
       - package: Shared
         product: Rendering
+      - package: Shared
+        product: JerboaCLI
       - target: JerboaQuickLook
         embed: true
         codeSign: true
