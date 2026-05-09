@@ -22,10 +22,12 @@ Built with Swift and SwiftUI, it uses the platform's native WebView for renderin
 
 ## Features
 
-- **CommonMark rendering** with footnotes, task lists, smart typography, and auto-linking
+- **CommonMark rendering** with footnotes, task lists, GitHub-style alerts, smart typography, and auto-linking
 - **YAML frontmatter** displayed as a styled header with title and metadata
-- **Table of contents sidebar** with active heading tracking as you scroll
-- **Live reload** — file changes on disk are picked up automatically
+- **Table of contents sidebar** showing all heading levels (H1–H6) with active-heading tracking as you scroll
+- **Collapsible sections** — click any heading to fold its section
+- **Reload on demand** — file changes on disk show a "New content" button in the toolbar; <kbd>Cmd</kbd><kbd>R</kbd> or **File → Reload** force-refreshes anytime, preserving scroll position
+- **Cross-Document links** — clicking a Markdown link to another `.md` file opens it in a new Jerboa window
 - **Dark mode** follows your system appearance
 - **QuickLook extension** — preview Markdown files in Finder with spacebar
 - **Spotlight indexing** — opened files are searchable via Spotlight
