@@ -312,11 +312,13 @@ describe("heading IDs", () => {
 		expect(headings[1].id).toBe("section-1");
 	});
 
-	it("does not assign IDs to h1", () => {
-		// h1 is reserved for title
+	it("assigns IDs to body h1", () => {
+		// Body h1s appear in the TOC and are scrollToHeading targets (#25). The
+		// frontmatter title (h1.title) is rendered separately into metaHeader
+		// and is excluded by the TOC selector, not by the ID-assignment step.
 		render("# Top Level");
 		const h1 = document.getElementById("content")!.querySelector("h1");
-		expect(h1!.id).toBe("");
+		expect(h1!.id).toBe("top-level");
 	});
 
 	it("falls back to heading for special-char-only text", () => {
