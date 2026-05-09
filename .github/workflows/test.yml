@@ -26,8 +26,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: npm
-          cache-dependency-path: Tests/js/package-lock.json
       - name: Install
         run: npm ci
         working-directory: Tests/js
