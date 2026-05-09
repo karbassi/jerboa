@@ -82,24 +82,14 @@ extension WebViewCoordinator: WKScriptMessageHandler {
         _ userContentController: WKUserContentController,
         didReceive message: WKScriptMessage
     ) {
+        let name = message.name
+        let body = message.body
         Task { @MainActor in
-            switch message.name {
-            case "tocData":
-                if let jsonString = message.body as? String,
-                   let data = jsonString.data(using: .utf8) {
-                    let entries = (try? JSONDecoder().decode([Heading].self, from: data)) ?? []
-                    self.tocEntries = entries
-                }
-            case "scrollPosition":
-                if let id = message.body as? String {
-                    self.activeHeadingID = id.isEmpty ? nil : id
-                }
-            case "openLink":
-                if let href = message.body as? String {
-                    self.handleOpenLink(href)
-                }
-            default:
-                break
+            guard let event = ScriptMessageParser.parse(name: name, body: body) else { return }
+            switch event {
+            case .toc(let entries):       self.tocEntries = entries
+            case .scrollPosition(let id): self.activeHeadingID = id
+            case .openLink(let href):     self.handleOpenLink(href)
             }
         }
     }
