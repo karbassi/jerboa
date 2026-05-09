@@ -20,14 +20,15 @@ App/                          SwiftUI app target
 
 Shared/                                  Swift package — testable via `swift test`
   Sources/MarkdownRenderer/              viewer.html, viewer.js, *.css, markdown-it bundles, Heading struct, escape helper, viewerHTMLInlined()
-  Sources/DocumentSync/                  Reading | Pending Reload | Missing state machine (ADR-0007)
+  Sources/DocumentSync/                  FileWatcher + Reading | Pending Reload | Missing state machine (ADR-0007)
   Sources/Linking/                       LinkResolver + LinkActionDispatching (resolve href → execute action)
-  Sources/Rendering/                     RenderingOrchestrator (queue render, dedupe, fire on page-loaded)
-  Tests/                                 one test target per module; 46 tests, all green via swift test
+  Sources/Rendering/                     RenderingOrchestrator + ScriptMessageParser (queue render, decode bridge messages)
+  Sources/JerboaCLI/                     Pure CLI argv parser (--help, file paths, dashed-flag pairs)
+  Tests/                                 one test target per module; 80 tests, all green via swift test
 
-Tests/JerboaTests/             XCTest unit tests (FileWatcher, render benchmarks, linkify)
-Tests/JerboaUITests/           XCUITest end-to-end (currently blocked by macOS Accessibility permission — see Gotchas)
-Tests/js/                      vitest tests for viewer.js
+Tests/JerboaTests/             XCTest target (RenderBenchmarkTests only — currently dormant; runner won't bootstrap on this macOS)
+Tests/JerboaUITests/           XCUITest end-to-end (3 tests; class-level shared launch + accessibility-id selectors)
+Tests/js/                      vitest tests for viewer.js (103 tests)
 
 QuickLook/                     QuickLook preview extension (.appex), uses RenderingOrchestrator (#22)
 docs/agents/                   agent-skill conventions (issue tracker, labels, domain)
@@ -44,9 +45,10 @@ Run via `mise run <task>`. The full list lives in `.mise.toml`; the ones you'll 
 - `mise run generate` — regenerate `Jerboa.xcodeproj` from `project.yml` (also stamps `BuildConfig/GitInfo.local.xcconfig` with the current git SHA + tag-derived version)
 - `mise run build` — build the app
 - `mise run debug` / `mise run run` — Debug build / Debug build + launch
-- `mise run test-package` — `swift test` in `Shared/` (46 tests, fast, reliable — preferred for unit testing)
-- `mise run test-js` — vitest tests for `viewer.js`
-- `mise run test` — full XCTest suite (currently flaky to bootstrap on macOS 26; see Gotchas)
+- `mise run test-package` — `swift test` in `Shared/` (80 tests, fast, reliable — preferred for unit testing)
+- `mise run test-js` — vitest tests for `viewer.js` (103 tests)
+- `xcodebuild test -scheme JerboaUITests -destination 'platform=macOS'` — XCUITest end-to-end (3 tests, ~14s; needs Accessibility permission for the test runner on this machine — granted manually via System Settings)
+- `mise run test` — full XCTest unit suite (currently dormant; runner won't bootstrap on this macOS for unit tests)
 - `mise run lint` / `mise run lint:fix` — Biome on CSS/JS
 - `mise run sign` / `mise run zip` / `mise run install` — release packaging
 
@@ -62,7 +64,8 @@ Run via `mise run <task>`. The full list lives in `.mise.toml`; the ones you'll 
 - **Cross-Document link clicks open in Jerboa.** `SystemLinkActionDispatcher.openDocument` uses `NSWorkspace.shared.open(_:withApplicationAt:configuration:)` with `Bundle.main.bundleURL`, otherwise Launch Services would route Markdown links to whatever app the Reader has set as their default `.md` handler.
 - **Version comes from git tags.** `project.yml` sets `MARKETING_VERSION = $(GIT_VERSION)`, which `mise run generate` populates from `git describe --tags`. Don't hardcode a version in `Info.plist` or anywhere else.
 - **`.xcodeproj` is generated.** Edit `project.yml` then `mise run generate`. Don't hand-edit the project file.
-- **Test-runner flake on this machine.** `mise run test` (full XCTest) and `JerboaUITests` both fail to bootstrap on macOS 26: the unit-test runner exits with code 0 before establishing connection; the UI-test runner times out at "enabling automation mode" (Accessibility permission gap). `mise run test-package` and `mise run test-js` work reliably and cover most logic.
+- **Test-runner flake on this machine.** The `Jerboa` scheme's XCTest unit-test target (`mise run test`) won't bootstrap on macOS 26 — the runner exits with code 0 before connecting. RenderBenchmarkTests is the only file there now and is effectively dormant locally; CI on fresh macos-26 runners doesn't hit it. The XCUITest scheme works once Accessibility permission is granted to the test runner (System Settings → Privacy & Security → Accessibility); CI runners already have it.
+- **CI on every push and PR.** `.github/workflows/test.yml` runs four jobs: `swift test` (Shared package), `vitest` (viewer.js), `xcodebuild build` (full app), and `XCUITest` (JerboaUITests). All green on `macos-26` runners; if a job breaks here it'll break in CI.
 - **Autonomous UI verification is via the Debug snapshot.** `kill -USR1 $(pgrep -x Jerboa)` (Debug builds only) writes `${TMPDIR}/jerboa-screenshot.png` (window pixels via `cacheDisplay` — no Screen Recording permission needed) and `${TMPDIR}/jerboa-state.json` (TOC entries, sync state, file URL, scroll-tracked active heading). Use the JSON for verifying SwiftUI Lists and other layer-backed views that `cacheDisplay` can't reliably capture.
 
 ## Release flow
