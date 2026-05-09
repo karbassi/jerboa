@@ -7,6 +7,18 @@ struct TOCSidebarView: View {
     let fontSize: CGFloat
     let onSelect: (String) -> Void
 
+    /// Shallowest heading level present, used as the indentation reference.
+    /// A doc with only h2/h3 indents h2 at 0; a doc with h1/h2/h3 indents h1 at 0.
+    private var minLevel: Int { entries.map(\.level).min() ?? 1 }
+
+    private func weight(for level: Int) -> Font.Weight {
+        level == minLevel ? .bold : .regular
+    }
+
+    private func indent(for level: Int) -> CGFloat {
+        CGFloat(max(0, level - minLevel)) * 12
+    }
+
     var body: some View {
         ScrollViewReader { proxy in
             List(entries) { entry in
@@ -14,9 +26,9 @@ struct TOCSidebarView: View {
                     onSelect(entry.id)
                 } label: {
                     Text(entry.title)
-                        .font(.system(size: fontSize, weight: entry.level == 2 ? .bold : .regular))
+                        .font(.system(size: fontSize, weight: weight(for: entry.level)))
                         .foregroundStyle(entry.id == activeHeadingID ? .primary : .secondary)
-                        .padding(.leading, entry.level == 3 ? 16 : 0)
+                        .padding(.leading, indent(for: entry.level))
                 }
                 .buttonStyle(.plain)
                 .id(entry.id)

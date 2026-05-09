@@ -128,7 +128,7 @@ function buildMetaHeader(meta) {
 // ── Assign heading IDs (deduplicated) ──
 function assignHeadingIds(container) {
 	var seen = {};
-	container.querySelectorAll("h2, h3, h4, h5, h6").forEach((h) => {
+	container.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((h) => {
 		var base = headingId(h.textContent) || "heading";
 		var id = base;
 		if (seen[base]) {
@@ -141,7 +141,7 @@ function assignHeadingIds(container) {
 
 // ── Collapsible headers ──
 function makeHeadersCollapsible(container) {
-	var headings = container.querySelectorAll("h2, h3, h4, h5, h6");
+	var headings = container.querySelectorAll("h1, h2, h3, h4, h5, h6");
 	for (var i = 0; i < headings.length; i++) {
 		var h = headings[i];
 		var level = parseInt(h.tagName.charAt(1), 10);
@@ -240,8 +240,11 @@ var _scrollHandler = null;
 var _lastReportedId = null;
 
 function initNativeScrollTracking() {
-	// TOC sidebar only shows h2/h3 — h4-h6 have IDs for collapsible/scrollTo but are excluded from TOC
-	var headings = document.querySelectorAll("h2[id], h3[id]");
+	// All h1–h6 with IDs participate in active-heading tracking. The frontmatter title
+	// (h1.title) is excluded — it's a metadata header, not a structural heading.
+	var headings = document.querySelectorAll(
+		"h1[id]:not(.title), h2[id], h3[id], h4[id], h5[id], h6[id]",
+	);
 
 	if (_scrollHandler) {
 		window.removeEventListener("scroll", _scrollHandler);
@@ -323,8 +326,11 @@ window.renderMarkdown = (text) => {
 	// Defer non-critical work
 	if (isNativeApp) {
 		(window.requestIdleCallback || requestAnimationFrame)(() => {
-			// TOC sidebar only shows h2/h3 — h4-h6 excluded intentionally
-			var headings = content.querySelectorAll("h2[id], h3[id]");
+			// Surface all h1–h6 in the TOC; exclude the frontmatter title (h1.title)
+			// since it's a metadata header rendered separately, not a structural heading.
+			var headings = content.querySelectorAll(
+				"h1[id]:not(.title), h2[id], h3[id], h4[id], h5[id], h6[id]",
+			);
 			var entries = [];
 			headings.forEach((h) => {
 				entries.push({
