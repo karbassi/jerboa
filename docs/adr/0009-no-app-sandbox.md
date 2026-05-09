@@ -1,0 +1,9 @@
+# Drop the macOS app sandbox
+
+Jerboa's `Jerboa.entitlements` no longer declares `com.apple.security.app-sandbox`. The app runs without the macOS sandbox.
+
+The trigger was #23: every API for opening a sibling Document (`NSDocumentController.openDocument`, `NSWorkspace.shared.open`) hit `NSPOSIXErrorDomain Code=13 "Permission denied"` because `com.apple.security.files.user-selected.read-only` only grants access to the file the Reader explicitly opened, not its siblings. Cross-Document linking — a feature ADR-0001 calls in scope — was structurally broken. The alternatives (an Open dialog with `canChooseDirectories=true` for every cross-Document link, or accepting the limitation and forcing manual re-opens) all carried worse trade-offs than dropping the sandbox.
+
+The read-only invariant is now enforced exclusively in code: `FileWatcher` opens files with `O_EVTONLY`, `MarkdownDocument` exposes no write path, and the renderer is JS-side with no filesystem access. The Content-Security-Policy in `viewer.html` (`default-src 'none'; connect-src 'none';` plus the inline-only allowances from ADR-0003) still blocks crafted Markdown from making outbound network requests. What we lost is the kernel-level defense-in-depth that catches mistakes the code-level enforcement misses; what we gained is cross-Document linking, faster cold start (no per-subresource sandbox-extension stalls — see ADR-0003 for what that fixed), and a simpler entitlements file (now empty).
+
+If Jerboa ever ships through the Mac App Store, the sandbox becomes mandatory and this decision must be revisited — likely with a security-scoped bookmark for the Document's parent directory established at first-open via an explicit "Choose Folder" gesture, persisted as a per-Reader preference. That contradicts ADR-0001's "no persistence beyond OS conventions," so the App Store path implies amending that ADR too.

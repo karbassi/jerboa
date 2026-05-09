@@ -8,10 +8,20 @@ public protocol LinkActionDispatching {
     func execute(_ action: LinkAction)
 }
 
-/// Production dispatcher: opens Documents through `NSDocumentController`, opens
-/// non-Markdown files and remote URLs through `NSWorkspace`. The two system calls are
-/// injected as closures so tests can substitute spies and assert routing without firing
-/// real side effects.
+/// Production dispatcher.
+///
+/// `openURL` and `openFile` route through `NSWorkspace.shared.open`, which lets Launch
+/// Services pick the right app for the URL or non-Markdown file (browser for http(s),
+/// Preview for images, etc.).
+///
+/// `openDocument` explicitly routes back to Jerboa via `NSWorkspace.shared.open(_:
+/// withApplicationAt:)` using the running app's bundle URL — otherwise Launch Services
+/// would route Markdown links to whatever app the Reader has set as their default `.md`
+/// handler. ADR-0001's window-per-Document rule says the linked Document opens in
+/// Jerboa, not the system default.
+///
+/// All calls are injected as closures so tests substitute spies and assert routing
+/// without firing real side effects.
 @MainActor
 public struct SystemLinkActionDispatcher: LinkActionDispatching {
     private let openURL: (URL) -> Void
@@ -20,9 +30,13 @@ public struct SystemLinkActionDispatcher: LinkActionDispatching {
     public init(
         openURL: @escaping (URL) -> Void = { NSWorkspace.shared.open($0) },
         openDocument: @escaping (URL) -> Void = { url in
-            NSDocumentController.shared.openDocument(
-                withContentsOf: url, display: true
-            ) { _, _, _ in }
+            let config = NSWorkspace.OpenConfiguration()
+            config.activates = true
+            NSWorkspace.shared.open(
+                [url],
+                withApplicationAt: Bundle.main.bundleURL,
+                configuration: config
+            ) { _, _ in }
         }
     ) {
         self.openURL = openURL
