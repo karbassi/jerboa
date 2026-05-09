@@ -1,0 +1,53 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  swift-tests:
+    name: swift test (Shared package)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run package tests
+        run: swift test --package-path Shared
+
+  js-tests:
+    name: vitest (viewer.js)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: Tests/js/package-lock.json
+      - name: Install
+        run: npm ci
+        working-directory: Tests/js
+      - name: Run vitest
+        run: npx vitest run
+        working-directory: Tests/js
+
+  build:
+    name: xcodebuild (Debug)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install xcodegen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build
+        run: |
+          xcodebuild build \
+            -scheme Jerboa \
+            -destination 'platform=macOS' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO
