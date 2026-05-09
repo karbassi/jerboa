@@ -8,6 +8,9 @@ struct ContentView: View {
     @StateObject private var sync = DocumentSyncStateMachine()
     @State private var fileWatcher: FileWatcher?
     @State private var displayText: String
+    #if DEBUG
+    @State private var debugDumperRegistration: DebugScreenshot.Registration?
+    #endif
     @AppStorage("sidebarVisible") private var sidebarVisible = true
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
@@ -55,7 +58,7 @@ struct ContentView: View {
                 SpotlightIndexer.index(fileURL: fileURL, text: document.text)
             }
             #if DEBUG
-            DebugScreenshot.register {
+            debugDumperRegistration = DebugScreenshot.register {
                 [
                     "fileURL": fileURL?.path ?? "",
                     "syncState": String(describing: sync.state),
@@ -72,6 +75,12 @@ struct ContentView: View {
         .onDisappear {
             coordinator.tearDown()
             fileWatcher?.stop()
+            #if DEBUG
+            if let registration = debugDumperRegistration {
+                DebugScreenshot.unregister(registration)
+                debugDumperRegistration = nil
+            }
+            #endif
         }
         .onChange(of: columnVisibility) { _, newValue in
             sidebarVisible = (newValue != .detailOnly)

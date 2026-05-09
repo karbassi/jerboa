@@ -19,8 +19,14 @@ import Foundation
 enum DebugScreenshot {
     typealias StateDumper = @MainActor () -> [String: Any]
 
+    /// Opaque handle returned by `register`; pass it to `unregister` to remove the
+    /// dumper (e.g. on `onDisappear`) so closed windows don't leave stale closures.
+    struct Registration: Hashable {
+        fileprivate let id: UUID
+    }
+
     nonisolated(unsafe) private static var source: DispatchSourceSignal?
-    nonisolated(unsafe) private static var stateDumpers: [StateDumper] = []
+    nonisolated(unsafe) private static var stateDumpers: [(id: UUID, dump: StateDumper)] = []
 
     static func install() {
         guard source == nil else { return }
@@ -34,10 +40,16 @@ enum DebugScreenshot {
     }
 
     /// Register a closure that returns the state to dump alongside the next snapshot.
-    /// Called on every SIGUSR1; if multiple windows register, all are dumped under their
-    /// own keys (window title or index).
-    static func register(stateDumper: @escaping StateDumper) {
-        stateDumpers.append(stateDumper)
+    /// Returns a `Registration` token the caller passes to `unregister` on teardown.
+    @discardableResult
+    static func register(stateDumper: @escaping StateDumper) -> Registration {
+        let id = UUID()
+        stateDumpers.append((id, stateDumper))
+        return Registration(id: id)
+    }
+
+    static func unregister(_ registration: Registration) {
+        stateDumpers.removeAll { $0.id == registration.id }
     }
 
     @MainActor
@@ -79,8 +91,8 @@ enum DebugScreenshot {
     private static func captureState(toDir dir: String) {
         guard !stateDumpers.isEmpty else { return }
         var windows: [[String: Any]] = []
-        for dumper in stateDumpers {
-            windows.append(dumper())
+        for entry in stateDumpers {
+            windows.append(entry.dump())
         }
         let payload: [String: Any] = ["windows": windows]
         let path = (dir as NSString).appendingPathComponent("jerboa-state.json")
